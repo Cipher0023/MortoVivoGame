@@ -24,9 +24,9 @@ export class Boy {
     // Ajustes iniciais de física e aparência
     this.sprite.setCollideWorldBounds(true);
 
-    // Escala para garantir que o personagem seja visível
+    // Escala reduzida para melhor proporção com o zoom out
     // Ajuste conforme o tamanho real da imagem boy.png
-    this.sprite.setScale(2);
+    this.sprite.setScale(1);
 
     return this.sprite;
   }

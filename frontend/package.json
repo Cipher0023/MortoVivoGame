@@ -9,10 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ar-js-org/ar.js": "^3.4.7",
+    "@types/three": "^0.182.0",
     "next": "16.0.5",
     "phaser": "^3.90.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
