@@ -1,34 +1,92 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Boy } from "../game/Boy";
 import { getLevelByMarker, type LevelConfig } from "../config/levels";
 import ARCamera from "./ARCamera";
 import TouchJoystick from "./TouchJoystick";
+
+const BOY_WALK_ASSETS = Array.from({ length: 12 }, (_, index) => {
+  const frame = String(index + 1).padStart(2, "0");
+  return `/boy/walk_${frame}.png`;
+});
+
+const GAME_ASSET_URLS = [
+  "/textura_fundo.png",
+  "/yellowGrass.png",
+  "/casabg.png",
+  "/arvore-removebg-preview.png",
+  "/boy.png",
+  ...BOY_WALK_ASSETS,
+];
 
 export default function Game() {
   const gameRef = useRef<HTMLDivElement>(null);
   const [arEnabled, setArEnabled] = useState(false);
   const [currentLevel, setCurrentLevel] = useState<LevelConfig | null>(null);
   const gameInstanceRef = useRef<Phaser.Game | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [levelCompleted, setLevelCompleted] = useState(false);
+  const [isPreparingGame, setIsPreparingGame] = useState(false);
   const joystickDirection = useRef({ x: 0, y: 0 });
+  const gameAssetsCached = useRef(false);
+  const markerHandlingInProgress = useRef(false);
 
-  // Garante que o componente só renderiza no cliente
-  useEffect(() => {
-    setIsMounted(true);
+  const warmSingleAsset = useCallback(async (assetUrl: string) => {
+    try {
+      await fetch(assetUrl, { cache: "force-cache" });
+    } catch {
+      // Mesmo com falha no fetch, tentamos carregar via Image para aquecer cache/decoder.
+    }
+
+    await new Promise<void>((resolve) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => {
+        if (img.decode) {
+          img
+            .decode()
+            .catch(() => undefined)
+            .finally(() => resolve());
+          return;
+        }
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = assetUrl;
+    });
   }, []);
 
-  const handleMarkerFound = (markerPattern: string) => {
+  const warmGameAssets = useCallback(async () => {
+    if (gameAssetsCached.current) return;
+
+    await Promise.allSettled(
+      GAME_ASSET_URLS.map((assetUrl) => warmSingleAsset(assetUrl)),
+    );
+
+    gameAssetsCached.current = true;
+  }, [warmSingleAsset]);
+
+  const handleMarkerFound = async (markerPattern: string) => {
+    if (markerHandlingInProgress.current) return;
+
     const level = getLevelByMarker(markerPattern);
-    if (level) {
+    if (!level) return;
+
+    markerHandlingInProgress.current = true;
+    setIsPreparingGame(true);
+    setArEnabled(false); // Desativar AR para reduzir custo enquanto prepara assets
+
+    try {
+      await warmGameAssets();
+
       console.log(`Página detectada: ${level.chapter} - ${level.name}`);
       setCurrentLevel(level);
       setGameStarted(true);
       setLevelCompleted(false);
-      setArEnabled(false); // Desativar AR quando a fase iniciar
+    } finally {
+      setIsPreparingGame(false);
+      markerHandlingInProgress.current = false;
     }
   };
 
@@ -37,7 +95,7 @@ export default function Game() {
   };
 
   useEffect(() => {
-    if (!isMounted || !gameRef.current || !gameStarted) return;
+    if (!gameRef.current || !gameStarted) return;
 
     let game: Phaser.Game | null = null;
 
@@ -49,11 +107,11 @@ export default function Game() {
         // Referência ao jogador (sprite físico controlável)
         private player!: Phaser.Physics.Arcade.Sprite;
 
+        // Controlador do personagem para estados de animação
+        private boyController!: Boy;
+
         // Teclas direcionais (setas do teclado)
         private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-
-        // Variável para animação de passos
-        private walkBounceTime = 0;
 
         // Largura do mundo para detectar fim da fase
         private worldWidth = 0;
@@ -100,7 +158,7 @@ export default function Game() {
               worldHeight / 2,
               worldWidth * 2, // Dobra a largura para mais tiles
               worldHeight * 2, // Dobra a altura para mais tiles
-              "backgroundTexture"
+              "backgroundTexture",
             )
             .setOrigin(0.5, 0.5)
             .setScrollFactor(0);
@@ -110,7 +168,7 @@ export default function Game() {
           const casa = this.add.image(
             worldWidth / 2 + 100, // Posicionada um pouco à direita do centro
             worldHeight - 400, // Posição mais alta para ficar visível
-            "casabg"
+            "casabg",
           );
           casa.setOrigin(0.5, 1); // Ancorar pela base inferior
           casa.setScale(2.0); // Ajustar tamanho conforme necessário
@@ -121,7 +179,7 @@ export default function Game() {
           const arvore = this.add.image(
             worldWidth / 2 - 2300, // Posicionada à esquerda do centro
             worldHeight - 300, // Posição mais alta para ficar visível
-            "arvore"
+            "arvore",
           );
           arvore.setOrigin(0.5, 1); // Ancorar pela base inferior
           arvore.setScale(2.0); // Ajustar tamanho conforme necessário
@@ -138,7 +196,7 @@ export default function Game() {
             grassY,
             worldWidth * 2, // Largura grande para repetir horizontalmente
             grassHeight, // Altura igual à textura original
-            "yellowgrass"
+            "yellowgrass",
           );
 
           // Chão de colisão (retângulo acima da grama)
@@ -148,7 +206,7 @@ export default function Game() {
             worldWidth / 2,
             groundY,
             worldWidth,
-            groundThickness
+            groundThickness,
           );
           this.physics.add.existing(ground, true);
 
@@ -161,8 +219,11 @@ export default function Game() {
           this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
 
           // Criar player usando a classe Boy
-          const boy = new Boy(this);
-          this.player = boy.create(worldWidth / 2, worldHeight - 600);
+          this.boyController = new Boy(this);
+          this.player = this.boyController.create(
+            worldWidth / 2,
+            worldHeight - 600,
+          );
 
           // Configurar física do player
           this.player.setBounce(0.5);
@@ -187,8 +248,8 @@ export default function Game() {
         }
 
         update() {
-          const speed = 200;
-          const jumpVelocity = -400;
+          const speed = Boy.TUNING.movement.runSpeed;
+          const jumpVelocity = Boy.TUNING.movement.jumpVelocity;
 
           // Obter direção do joystick HTML externo
           const joyDir = joystickDirection.current;
@@ -232,17 +293,12 @@ export default function Game() {
             }
           }
 
-          // Efeito de saltitar ao andar (apenas quando no chão)
-          if (isWalking && this.player.body!.touching.down) {
-            this.walkBounceTime += 0.2; // Velocidade da oscilação
-            const bounceOffset = Math.sin(this.walkBounceTime) * 6; // Amplitude de 6 pixels
-            this.player.y +=
-              bounceOffset - (this.player.getData("lastBounce") || 0);
-            this.player.setData("lastBounce", bounceOffset);
-          } else {
-            this.walkBounceTime = 0;
-            this.player.setData("lastBounce", 0);
-          }
+          const body = this.player.body as Phaser.Physics.Arcade.Body;
+          const isOnGround = body.blocked.down || body.touching.down;
+          this.boyController.updateAnimation({
+            isMovingHorizontally: isWalking,
+            isOnGround,
+          });
 
           // Verificar se o jogador chegou ao fim da fase
           if (
@@ -252,7 +308,7 @@ export default function Game() {
             console.log(
               `Fase concluída! Posição do jogador: ${this.player.x}, Limite: ${
                 this.worldWidth - 50
-              }`
+              }`,
             );
             this.hasCompletedLevel = true;
             setLevelCompleted(true);
@@ -301,16 +357,7 @@ export default function Game() {
         game.destroy(true);
       }
     };
-  }, [currentLevel, isMounted, gameStarted]);
-
-  // Não renderizar nada no servidor
-  if (!isMounted) {
-    return (
-      <div className="relative flex justify-center items-center bg-black w-full h-full">
-        <div className="text-white">Carregando...</div>
-      </div>
-    );
-  }
+  }, [currentLevel, gameStarted]);
 
   // Menu principal antes do jogo começar
   if (!gameStarted) {
@@ -397,6 +444,19 @@ export default function Game() {
               </button>
             </div>
           </>
+        )}
+
+        {isPreparingGame && (
+          <div className="z-60 absolute inset-0 flex justify-center items-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-black/60 p-6 border border-white/20 rounded-xl text-center">
+              <p className="font-semibold text-white text-xl">
+                Preparando fase...
+              </p>
+              <p className="opacity-80 mt-2 text-white text-sm">
+                Carregando imagens no cache para evitar travamentos iniciais.
+              </p>
+            </div>
+          </div>
         )}
       </div>
     );

@@ -9,9 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ar-js-org/ar.js": "^3.4.7",
+    "@ar-js-org/ar.js": "3.4.5",
     "@types/three": "^0.182.0",
-    "next": "16.0.5",
+    "next": "16.2.10",
     "phaser": "^3.90.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
@@ -23,8 +23,12 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.0.5",
+    "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "axios": "^1.18.1",
+    "postcss": "^8.5.16"
   }
 }
