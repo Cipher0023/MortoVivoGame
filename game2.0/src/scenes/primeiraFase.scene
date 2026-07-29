@@ -1,0 +1,78 @@
+{
+    "id": "dc95fd59-f516-44f9-877c-8fe46e2d16cc",
+    "sceneType": "SCENE",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "importFileExtension": true,
+        "preloadPackFiles": [],
+        "createMethodName": "editorCreate",
+        "sceneKey": "primeiraFase",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "Image",
+            "id": "57dd1a70-460b-47d5-bd7f-332fda419c57",
+            "label": "backgroundTeste",
+            "scope": "PUBLIC",
+            "texture": {
+                "key": "backgroundTeste"
+            },
+            "x": 681,
+            "y": 361,
+            "scaleX": 0.9717082853336187,
+            "scaleY": 1.0980239536007053
+        },
+        {
+            "type": "EditableTilemapLayer",
+            "id": "2083b4d1-f302-4f44-a73d-02bb71ae2a52",
+            "label": "Chão e tiles adicionais",
+            "x": -90,
+            "y": -6,
+            "scaleX": 5.3162196042833605,
+            "scaleY": 2.493258411020801,
+            "tilemapId": "88a5ecfa-353f-4125-8c9f-bf01a271088a"
+        }
+    ],
+    "plainObjects": [
+        {
+            "id": "88a5ecfa-353f-4125-8c9f-bf01a271088a",
+            "type": "EditableTilemap",
+            "label": "editabletilemap",
+            "width": 10,
+            "height": 10,
+            "tileWidth": 32,
+            "tileHeight": 32,
+            "tilesets": [
+                {
+                    "name": "chao",
+                    "imageKey": "chao",
+                    "tileWidth": 32,
+                    "tileHeight": 32,
+                    "tileMargin": 0,
+                    "tileSpacing": 0
+                }
+            ],
+            "paintLayerId": "2083b4d1-f302-4f44-a73d-02bb71ae2a52",
+            "paintTileset": "chao",
+            "layers": [
+                {
+                    "name": "Chão e tiles adicionais",
+                    "data": "[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,56,56,56,56,56,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                    "width": 10,
+                    "height": 10,
+                    "tileWidth": 32,
+                    "tileHeight": 32
+                }
+            ]
+        }
+    ],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}

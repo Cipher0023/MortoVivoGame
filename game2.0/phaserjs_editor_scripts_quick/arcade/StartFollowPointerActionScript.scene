@@ -1,0 +1,52 @@
+{
+    "id": "a246f421-f771-42fe-adbe-f294c4404e1f",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "prefabObjDisplayFmt": "Start follow pointer",
+        "displayName": "Start Follow Pointer Action",
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 360,
+        "borderHeight": 320
+    },
+    "displayList": [
+        {
+            "type": "ScriptNode",
+            "id": "525fc623-1be0-4cb5-98c5-c07f3e475dab",
+            "label": "scriptnode_1"
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor 2D - Scene Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    },
+    "prefabProperties": [
+        {
+            "name": "speed",
+            "label": "Speed",
+            "tooltip": "The speed it will move, in pixels per second",
+            "defValue": 60,
+            "customDefinition": false,
+            "type": {
+                "id": "number"
+            }
+        },
+        {
+            "name": "maxTime",
+            "label": "Max Time",
+            "tooltip": "Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms. Default 0.",
+            "defValue": 0,
+            "customDefinition": false,
+            "type": {
+                "id": "number"
+            }
+        }
+    ]
+}

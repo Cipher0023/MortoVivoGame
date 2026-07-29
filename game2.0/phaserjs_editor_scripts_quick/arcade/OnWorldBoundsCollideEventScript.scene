@@ -1,0 +1,80 @@
+{
+    "id": "5691e572-0cb0-4507-8372-8b5daefd7b77",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "prefabObjDisplayFmt": "On collide world bounds #{up} #{down} #{left} #{right}",
+        "displayName": "On World Bounds Collide Event",
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "prefabId": "437c7d1d-12e5-4251-8d72-3ee5abae49d2",
+            "id": "423fbdff-7fe6-4b2c-95b7-ef225fa13af6",
+            "unlock": [
+                "x",
+                "y",
+                "eventName",
+                "eventEmitter"
+            ],
+            "label": "scriptnode_1",
+            "eventName": "Phaser.Physics.Arcade.Events.WORLD_BOUNDS",
+            "eventEmitter": "scene.physics.world"
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor 2D - Scene Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    },
+    "prefabProperties": [
+        {
+            "name": "up",
+            "label": "Up",
+            "tooltip": "Is the Body blocked up?",
+            "defValue": true,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        },
+        {
+            "name": "down",
+            "label": "Down",
+            "tooltip": "Is the Body blocked down?",
+            "defValue": true,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        },
+        {
+            "name": "left",
+            "label": "Left",
+            "tooltip": "Is the Body blocked left?",
+            "defValue": true,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        },
+        {
+            "name": "right",
+            "label": "Right",
+            "tooltip": "Is the Body blocked right?",
+            "defValue": true,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        }
+    ]
+}

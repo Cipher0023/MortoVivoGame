@@ -1,0 +1,56 @@
+{
+    "id": "8b05d14f-3d5d-42a7-adfb-a0b20d9196b5",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "prefabObjDisplayFmt": "Fade camera \"${fadeDirection}\"",
+        "displayName": "Fade Camera Action",
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "ScriptNode",
+            "id": "79218a08-b5f5-4c56-86f5-573d58b960a2",
+            "label": "scriptnode_1"
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor 2D - Scene Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    },
+    "prefabProperties": [
+        {
+            "name": "fadeDirection",
+            "label": "Fade Direction",
+            "tooltip": "",
+            "defValue": "FadeIn",
+            "customDefinition": false,
+            "type": {
+                "id": "option",
+                "options": [
+                    "FadeIn",
+                    "FadeOut"
+                ]
+            }
+        },
+        {
+            "name": "color",
+            "label": "Color",
+            "tooltip": "",
+            "defValue": "#000000",
+            "customDefinition": false,
+            "type": {
+                "id": "color"
+            }
+        }
+    ]
+}

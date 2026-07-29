@@ -1,0 +1,88 @@
+{
+    "id": "4c12d8f0-15ea-42f4-bf21-fa80585f6a64",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "prefabObjDisplayFmt": "If body is touching #{left} #{right} #{up} #{down}",
+        "displayName": "If Body Touching",
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 360,
+        "borderHeight": 240
+    },
+    "displayList": [
+        {
+            "type": "ScriptNode",
+            "id": "91e1325e-9012-4006-b26d-3888877d9588",
+            "label": "scriptnode_1",
+            "list": [
+                {
+                    "prefabId": "457af5d2-ff70-4d8d-b29e-b524bf485778",
+                    "id": "ca6a42fa-82db-4d2f-9d6d-6eff47ca5bc8",
+                    "label": "elseActions",
+                    "displayName": "Else actions",
+                    "scope": "NESTED_PREFAB"
+                },
+                {
+                    "prefabId": "457af5d2-ff70-4d8d-b29e-b524bf485778",
+                    "id": "051d6a33-1d33-47c1-bc3a-87f96f83d1c8",
+                    "label": "thenActions",
+                    "displayName": "Then actions",
+                    "scope": "NESTED_PREFAB"
+                }
+            ]
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor 2D - Scene Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    },
+    "prefabProperties": [
+        {
+            "name": "left",
+            "label": "Left",
+            "tooltip": "",
+            "defValue": false,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        },
+        {
+            "name": "right",
+            "label": "Right",
+            "tooltip": "",
+            "defValue": false,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        },
+        {
+            "name": "up",
+            "label": "Up",
+            "tooltip": "",
+            "defValue": false,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        },
+        {
+            "name": "down",
+            "label": "Down",
+            "tooltip": "",
+            "defValue": false,
+            "customDefinition": false,
+            "type": {
+                "id": "boolean"
+            }
+        }
+    ]
+}

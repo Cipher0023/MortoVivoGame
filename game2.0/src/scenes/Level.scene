@@ -1,0 +1,113 @@
+{
+    "id": "01aefa93-6044-4159-8358-7e91310aa05f",
+    "sceneType": "SCENE",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "importFileExtension": true,
+        "preloadPackFiles": [],
+        "createMethodName": "editorCreate",
+        "sceneKey": "Level",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "ArcadeImage",
+            "id": "7d5827fd-34f6-473f-90e0-b9424a51d5fa",
+            "label": "dino",
+            "scope": "CLASS",
+            "hitArea.shape": "RECTANGLE",
+            "hitArea.width": 250,
+            "hitArea.height": 250,
+            "texture": {
+                "key": "dino"
+            },
+            "x": 640,
+            "y": 288,
+            "body.immovable": true,
+            "body.width": 250,
+            "body.height": 250
+        },
+        {
+            "type": "Text",
+            "id": "b2b3dbd5-2106-41fa-8a04-9b511e3401a9",
+            "label": "welcome",
+            "scope": "CLASS",
+            "x": 640,
+            "y": 478,
+            "originX": 0.5,
+            "originY": 0.5,
+            "text": "Phaser 4 + Phaser Editor v5",
+            "fontFamily": "Arial",
+            "fontSize": "30px"
+        },
+        {
+            "type": "Image",
+            "id": "8afca0d5-8716-4ada-8f17-88dc69eaf002",
+            "label": "backgroundTeste",
+            "texture": {
+                "key": "backgroundTeste"
+            },
+            "x": 1643,
+            "y": 356
+        },
+        {
+            "type": "ArcadeImage",
+            "id": "2bcdfa74-679e-4bd0-8340-b81f584081e6",
+            "label": "dino_1",
+            "scope": "CLASS",
+            "hitArea.shape": "RECTANGLE",
+            "hitArea.width": 250,
+            "hitArea.height": 250,
+            "texture": {
+                "key": "dino"
+            },
+            "x": 135,
+            "y": 167,
+            "body.collideWorldBounds": true,
+            "body.width": 250,
+            "body.height": 250
+        }
+    ],
+    "plainObjects": [
+        {
+            "id": "7e1ebfb5-e18f-43b7-85f6-c2ab48226d2c",
+            "type": "Keyboard.Key",
+            "label": "upkey",
+            "keyCode": "UP"
+        },
+        {
+            "id": "2469aafd-b063-4a16-9cd7-b267719844c1",
+            "type": "Keyboard.Key",
+            "label": "downkey",
+            "keyCode": "DOWN"
+        },
+        {
+            "id": "1db71458-2829-418a-9ff2-c850fa2ae8f8",
+            "type": "Keyboard.Key",
+            "label": "leftkey",
+            "keyCode": "LEFT"
+        },
+        {
+            "id": "63595e52-5b3d-4405-9549-3834225127fc",
+            "type": "Keyboard.Key",
+            "label": "rightkey",
+            "keyCode": "RIGHT"
+        },
+        {
+            "id": "90c64eb1-0221-4af2-9de3-1ef0ccc4c687",
+            "type": "Collider",
+            "label": "collider",
+            "scope": "LOCAL",
+            "object1": "dino",
+            "object2": "dino_1"
+        }
+    ],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}

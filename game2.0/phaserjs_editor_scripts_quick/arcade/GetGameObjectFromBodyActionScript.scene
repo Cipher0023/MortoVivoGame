@@ -1,0 +1,34 @@
+{
+    "id": "d325f96b-76bd-490c-94dc-3251ec58c4cc",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "prefabObjDisplayFmt": "Get game object from body",
+        "displayName": "Get GameObject From Body Action",
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 360,
+        "borderHeight": 240
+    },
+    "displayList": [
+        {
+            "type": "ScriptNode",
+            "id": "9c2cad27-9e51-482b-896d-898fc56843be",
+            "label": "scriptnode_1",
+            "components": [
+                "ActionTargetComp"
+            ],
+            "ActionTargetComp.target": "ARG_1"
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor 2D - Scene Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}

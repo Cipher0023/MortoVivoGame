@@ -1,0 +1,56 @@
+import type { LevelDefinition } from "./types";
+
+export const level2: LevelDefinition = {
+  id: 2,
+  name: "Primeiro Encontro",
+  chapter: "Capítulo 2",
+  markerPattern: "marker2",
+  difficulty: "easy",
+  backgroundColor: "#9370DB",
+  cameraZoom: 0.6,
+  worldWidthMultiplier: 3,
+  worldHeightMultiplier: 2,
+  assets: [
+    { key: "backgroundTexture", path: "/textura_fundo.png" },
+    { key: "yellowgrass", path: "/yellowGrass.png" },
+    { key: "casabg", path: "/casabg.png" },
+    { key: "arvore", path: "/arvore-removebg-preview.png" },
+  ],
+  layers: [
+    {
+      type: "tile",
+      texture: "backgroundTexture",
+      scrollFactor: 0,
+      depth: -2,
+      fillMode: "world",
+    },
+    {
+      type: "image",
+      texture: "casabg",
+      scrollFactor: 0.3,
+      depth: -1,
+      scale: 2.0,
+      xFromCenter: 100,
+      yFromBottom: 400,
+    },
+    {
+      type: "image",
+      texture: "arvore",
+      scrollFactor: 0.3,
+      depth: -1,
+      scale: 2.0,
+      xFromCenter: -2300,
+      yFromBottom: 300,
+    },
+    {
+      type: "tile",
+      texture: "yellowgrass",
+      scrollFactor: 1,
+      depth: 0,
+      fillMode: "fixedHeight",
+      fixedHeight: 220,
+    },
+  ],
+  ground: { thickness: 120 },
+  player: { xProportion: 0.5, yFromBottom: 600 },
+};

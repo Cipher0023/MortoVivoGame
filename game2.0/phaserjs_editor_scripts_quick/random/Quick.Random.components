@@ -1,0 +1,100 @@
+{
+    "components": [
+        {
+            "name": "RandomMultipleComp",
+            "displayName": "Random Multiple Config",
+            "objectDisplayFormat": "a multiple of \"${multiple}\" between \"${min}\" to \"${max}\"",
+            "baseClass": "",
+            "gameObjectType": "any",
+            "properties": [
+                {
+                    "name": "multiple",
+                    "label": "Multiple",
+                    "tooltip": "Select a random multiple in a range.",
+                    "defValue": 10,
+                    "customDefinition": false,
+                    "type": {
+                        "id": "number"
+                    }
+                },
+                {
+                    "name": "min",
+                    "label": "Min",
+                    "tooltip": "Min random number.",
+                    "defValue": 0,
+                    "customDefinition": false,
+                    "type": {
+                        "id": "number"
+                    }
+                },
+                {
+                    "name": "max",
+                    "label": "Max",
+                    "tooltip": "Max random number.",
+                    "defValue": 1000,
+                    "customDefinition": false,
+                    "type": {
+                        "id": "number"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "RandomInArrayComp",
+            "displayName": "Random In Array Config",
+            "objectDisplayFormat": "one in \"${options}\"",
+            "baseClass": "",
+            "gameObjectType": "any",
+            "properties": [
+                {
+                    "name": "options",
+                    "label": "Options",
+                    "tooltip": "",
+                    "defValue": "[]",
+                    "customDefinition": false,
+                    "type": {
+                        "id": "expression",
+                        "expressionType": "number[]"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "RandomBetweenComp",
+            "displayName": "Random Number Between Config",
+            "objectDisplayFormat": "between \"${min}\" and \"${max}\"",
+            "baseClass": "",
+            "gameObjectType": "any",
+            "properties": [
+                {
+                    "name": "min",
+                    "label": "Min",
+                    "tooltip": "",
+                    "defValue": 0,
+                    "customDefinition": false,
+                    "type": {
+                        "id": "number"
+                    }
+                },
+                {
+                    "name": "max",
+                    "label": "Max",
+                    "tooltip": "",
+                    "defValue": 1000,
+                    "customDefinition": false,
+                    "type": {
+                        "id": "number"
+                    }
+                }
+            ]
+        }
+    ],
+    "meta": {
+        "app": "Phaser Editor 2D - User Components Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.UserComponents"
+    },
+    "outputLang": "TYPE_SCRIPT",
+    "exportClass": true,
+    "autoImport": true
+}

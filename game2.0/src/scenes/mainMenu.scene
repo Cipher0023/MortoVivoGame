@@ -1,0 +1,72 @@
+{
+    "id": "64fe328b-2bf3-4a93-a451-48f2c50677a5",
+    "sceneType": "SCENE",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "importFileExtension": true,
+        "preloadPackFiles": [],
+        "createMethodName": "editorCreate",
+        "sceneKey": "mainMenu",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "Text",
+            "id": "5cc784c3-93bd-4d3d-8a35-f41ce5f13e14",
+            "label": "Game Title",
+            "description": "Game Title",
+            "x": 628,
+            "y": 152,
+            "originX": 0.5,
+            "originY": 0.5,
+            "text": "Morto Vivo Game Alpha 0.01",
+            "fontSize": "30px"
+        },
+        {
+            "type": "Image",
+            "id": "5ba9a54b-2d9e-4a11-9fe2-1d476c2c7a3d",
+            "label": "backgroundTeste",
+            "texture": {
+                "key": "backgroundTeste"
+            },
+            "x": 713,
+            "y": -355
+        },
+        {
+            "type": "Text",
+            "id": "9efb8f63-7c47-4159-85f0-c77070a9a220",
+            "label": "Start",
+            "description": "Start button",
+            "hitArea.shape": "RECTANGLE",
+            "hitArea.width": 77,
+            "hitArea.height": 17,
+            "x": 580,
+            "y": 376,
+            "text": "Start",
+            "fontSize": "25px",
+            "list": [
+                {
+                    "prefabId": "a06ed60b-79f1-4444-bf35-89046f71f954",
+                    "id": "62dc2736-3ebc-474c-940b-8a58bb7bdee8",
+                    "label": "onPointerDownScript",
+                    "list": [
+                        {
+                            "prefabId": "1708207d-f647-4f7b-94c5-a23be5fca2e2",
+                            "id": "b8246191-f3d4-4159-9e6d-48d5a214d99c",
+                            "label": "gotoThisPage"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}

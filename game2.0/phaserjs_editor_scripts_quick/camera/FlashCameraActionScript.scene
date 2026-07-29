@@ -1,0 +1,42 @@
+{
+    "id": "bbd49388-d0fd-4f90-b06b-cbb89482404e",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "prefabObjDisplayFmt": "Flash camera",
+        "displayName": "Flash Camera Action",
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "ScriptNode",
+            "id": "6f5e5289-cc1e-4663-ac8d-44bf7dbb2832",
+            "label": "scriptnode_1"
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor 2D - Scene Editor",
+        "url": "https://phasereditor2d.com",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    },
+    "prefabProperties": [
+        {
+            "name": "color",
+            "label": "Color",
+            "tooltip": "",
+            "defValue": "#000000",
+            "customDefinition": false,
+            "type": {
+                "id": "color"
+            }
+        }
+    ]
+}
