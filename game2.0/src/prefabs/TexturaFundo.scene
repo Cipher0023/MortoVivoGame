@@ -1,0 +1,35 @@
+{
+    "id": "d5757dc0-06b8-4a87-baa9-d0c2e86a8008",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "importFileExtension": true,
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "Image",
+            "id": "81b12771-a50a-4632-bb73-6149df66bd89",
+            "label": "texturaFundo",
+            "texture": {
+                "key": "textura_fundo"
+            },
+            "x": 640,
+            "y": 360,
+            "scaleX": 3.090128755364807,
+            "scaleY": 3.090128755364807
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}

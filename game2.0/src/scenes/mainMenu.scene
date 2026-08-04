@@ -21,7 +21,7 @@
             "y": 152,
             "originX": 0.5,
             "originY": 0.5,
-            "text": "Morto Vivo Game Alpha 0.01",
+            "text": "Morto Vivo Game Alpha 0.02\n",
             "fontSize": "30px"
         },
         {
@@ -31,8 +31,8 @@
             "texture": {
                 "key": "backgroundTeste"
             },
-            "x": 713,
-            "y": -355
+            "x": 734,
+            "y": 767
         },
         {
             "type": "Text",

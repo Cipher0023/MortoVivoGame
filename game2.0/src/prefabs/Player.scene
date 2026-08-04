@@ -1,0 +1,34 @@
+{
+    "id": "02412971-1535-49e6-8083-4670ee05e459",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "importFileExtension": true,
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "Sprite",
+            "id": "a4d22ce2-fdd8-4280-b412-5c707761e96b",
+            "label": "boy",
+            "texture": {
+                "key": "boy-walk-01"
+            },
+            "x": 300,
+            "y": 502,
+            "originY": 1
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}

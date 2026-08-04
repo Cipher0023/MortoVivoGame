@@ -24,11 +24,11 @@ export default class mainMenu extends Phaser.Scene {
 		// Game Title
 		const game_Title = this.add.text(628, 152, "", {});
 		game_Title.setOrigin(0.5, 0.5);
-		game_Title.text = "Morto Vivo Game Alpha 0.01";
+		game_Title.text = "Morto Vivo Game Alpha 0.02\n";
 		game_Title.setStyle({ "fontSize": "30px" });
 
 		// backgroundTeste
-		this.add.image(713, -355, "backgroundTeste");
+		this.add.image(734, 767, "backgroundTeste");
 
 		// Start
 		const start = this.add.text(580, 376, "", {});

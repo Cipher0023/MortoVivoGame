@@ -20,6 +20,86 @@
                 "url": "assets/walk_01.png",
                 "type": "image",
                 "key": "walk_01"
+            },
+            {
+                "url": "assets/boy.png",
+                "type": "image",
+                "key": "boy"
+            },
+            {
+                "url": "assets/casabg.png",
+                "type": "image",
+                "key": "casabg"
+            },
+            {
+                "url": "assets/arvore.png",
+                "type": "image",
+                "key": "arvore"
+            },
+            {
+                "url": "assets/textura_fundo.png",
+                "type": "image",
+                "key": "textura_fundo"
+            },
+            {
+                "url": "assets/boy/walk_01.png",
+                "type": "image",
+                "key": "boy-walk-01"
+            },
+            {
+                "url": "assets/boy/walk_02.png",
+                "type": "image",
+                "key": "boy-walk-02"
+            },
+            {
+                "url": "assets/boy/walk_03.png",
+                "type": "image",
+                "key": "boy-walk-03"
+            },
+            {
+                "url": "assets/boy/walk_04.png",
+                "type": "image",
+                "key": "boy-walk-04"
+            },
+            {
+                "url": "assets/boy/walk_05.png",
+                "type": "image",
+                "key": "boy-walk-05"
+            },
+            {
+                "url": "assets/boy/walk_06.png",
+                "type": "image",
+                "key": "boy-walk-06"
+            },
+            {
+                "url": "assets/boy/walk_07.png",
+                "type": "image",
+                "key": "boy-walk-07"
+            },
+            {
+                "url": "assets/boy/walk_08.png",
+                "type": "image",
+                "key": "boy-walk-08"
+            },
+            {
+                "url": "assets/boy/walk_09.png",
+                "type": "image",
+                "key": "boy-walk-09"
+            },
+            {
+                "url": "assets/boy/walk_10.png",
+                "type": "image",
+                "key": "boy-walk-10"
+            },
+            {
+                "url": "assets/boy/walk_11.png",
+                "type": "image",
+                "key": "boy-walk-11"
+            },
+            {
+                "url": "assets/boy/walk_12.png",
+                "type": "image",
+                "key": "boy-walk-12"
             }
         ]
     },

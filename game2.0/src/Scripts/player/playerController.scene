@@ -1,0 +1,29 @@
+{
+    "id": "a11a6d72-b6b2-4d71-b007-3a834fab6157",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "importFileExtension": true,
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "ScriptNode",
+            "id": "783cc0b3-3c3b-469f-ba22-ddb7de23ab20",
+            "label": "scriptnode_1",
+            "description": "Movimento, pulo e animação do personagem jogável"
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}

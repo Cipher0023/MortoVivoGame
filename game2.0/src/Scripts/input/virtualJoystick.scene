@@ -1,0 +1,29 @@
+{
+    "id": "25bf7806-fc4a-40ac-b50f-3324c8ec8056",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "importFileExtension": true,
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "borderWidth": 1280,
+        "borderHeight": 720
+    },
+    "displayList": [
+        {
+            "type": "ScriptNode",
+            "id": "ce2d788c-cc27-4fec-813f-da9dbc15f525",
+            "label": "scriptnode_1",
+            "description": "Joystick virtual em Phaser puro (sem DOM/React)"
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}
