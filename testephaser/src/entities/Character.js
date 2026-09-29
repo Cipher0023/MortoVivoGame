@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PHYSICS } from '../config/constants.js';
+import { playSfx } from '../audio/sfx.js';
 
 export default class Character extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, width, height, color, name) {
@@ -34,6 +35,7 @@ export default class Character extends Phaser.GameObjects.Rectangle {
 
     if (input.jump && this.body.blocked.down) {
       this.body.setVelocityY(PHYSICS.JUMP_VELOCITY);
+      playSfx(this.scene, 'jump');
     }
   }
 }

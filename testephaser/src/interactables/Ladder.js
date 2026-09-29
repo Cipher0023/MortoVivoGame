@@ -1,5 +1,6 @@
 import TexturedBlock from '../entities/TexturedBlock.js';
 import { COLORS } from '../config/constants.js';
+import { playSfx } from '../audio/sfx.js';
 
 // Sensor: nunca é sólida, só detecta overlap (ver climbing na PlayScene).
 export default class Ladder extends TexturedBlock {
@@ -13,5 +14,6 @@ export default class Ladder extends TexturedBlock {
     if (this.dropped) return;
     this.dropped = true;
     this.setVisible(true);
+    playSfx(this.scene, 'ladderDrop');
   }
 }

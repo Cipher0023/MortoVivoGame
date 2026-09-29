@@ -2,6 +2,68 @@ export const TILES_PATH = `${import.meta.env.BASE_URL}assets/tiles/`;
 export const OBJECTS_PATH = `${import.meta.env.BASE_URL}assets/objetos/`;
 export const BOY_PATH = `${import.meta.env.BASE_URL}assets/boy/`;
 export const BLOCKS_PATH = `${import.meta.env.BASE_URL}assets/blocks/`;
+export const SOUNDS_PATH = `${import.meta.env.BASE_URL}assets/sounds/`;
+
+// Sons gravados (ver audio/sfx.js), um id por ação do jogo. Origem e licença
+// de cada arquivo: public/assets/sounds/CREDITOS.md (todos CC0).
+//   files:  variações — cada toque sorteia uma (passos não soam repetidos)
+//   volume: relativo, 0 a 1 (os arquivos já vêm com o mesmo pico)
+//   rate:   velocidade/tom (1 = original; 1.25 = mais agudo e rápido)
+//   vary:   variação aleatória de tom a cada toque (0.1 = ±10%)
+// Id sem arquivo aqui (ou arquivo que falhar ao carregar) volta pro som
+// sintetizado de mesmo id.
+const variants = (id, count) => Array.from({ length: count }, (_, i) => `${id}-${i + 1}.mp3`);
+export const SOUND_MANIFEST = [
+  // interface
+  { id: 'tick', files: variants('tick', 1), volume: 0.25 },
+  { id: 'click', files: variants('click', 1), volume: 0.4 },
+  { id: 'confirm', files: variants('confirm', 1), volume: 0.5 },
+  { id: 'back', files: variants('back', 1), volume: 0.45 },
+  { id: 'select', files: variants('select', 1), volume: 0.4 },
+  { id: 'toggle', files: variants('toggle', 1), volume: 0.4 },
+  { id: 'nope', files: variants('nope', 1), volume: 0.45 },
+  { id: 'error', files: variants('error', 1), volume: 0.5 },
+  // leitor de QR
+  { id: 'scanOk', files: variants('scanOk', 1), volume: 0.6 },
+  { id: 'comingSoon', files: variants('comingSoon', 1), volume: 0.6 },
+  // personagens
+  { id: 'jump', files: variants('jump', 3), volume: 0.45, vary: 0.1 },
+  { id: 'land', files: variants('land', 5), volume: 0.5, vary: 0.1 },
+  { id: 'step', files: variants('step', 10), volume: 0.3, vary: 0.08 },
+  { id: 'stepBone', files: variants('stepBone', 5), volume: 0.3, rate: 1.25, vary: 0.1 },
+  { id: 'climb', files: variants('climb', 5), volume: 0.35, vary: 0.1 },
+  { id: 'switch', files: variants('switch', 1), volume: 0.45 },
+  { id: 'wait', files: variants('wait', 1), volume: 0.45 },
+  { id: 'follow', files: variants('follow', 1), volume: 0.45 },
+  { id: 'thin', files: variants('thin', 1), volume: 0.45 },
+  { id: 'unthin', files: variants('unthin', 1), volume: 0.45 },
+  // mecanismos da fase
+  { id: 'lever', files: variants('lever', 1), volume: 0.7 },
+  { id: 'pressButton', files: variants('pressButton', 1), volume: 0.6 },
+  { id: 'gateOpen', files: variants('gateOpen', 1), volume: 0.7 },
+  { id: 'bridge', files: variants('bridge', 3), volume: 0.6 },
+  { id: 'ladderDrop', files: variants('ladderDrop', 2), volume: 0.7 },
+  { id: 'reveal', files: variants('reveal', 1), volume: 0.6 },
+  { id: 'key', files: variants('key', 1), volume: 0.6 },
+  { id: 'unlock', files: variants('unlock', 2), volume: 0.6 },
+  { id: 'door', files: variants('door', 1), volume: 0.6 },
+  { id: 'push', files: variants('push', 5), volume: 0.35, rate: 0.8, vary: 0.1 },
+  // morte / vitória
+  { id: 'splash', files: variants('splash', 3), volume: 0.7, vary: 0.05 },
+  { id: 'hit', files: variants('hit', 3), volume: 0.7 },
+  { id: 'death', files: variants('death', 1), volume: 0.6 },
+  { id: 'fall', files: variants('fall', 1), volume: 0.6 },
+  { id: 'win', files: variants('win', 1), volume: 0.7 },
+  // editor
+  { id: 'place', files: variants('place', 5), volume: 0.4, vary: 0.1 },
+  { id: 'erase', files: variants('erase', 3), volume: 0.4 },
+  { id: 'pickup', files: variants('pickup', 1), volume: 0.45 },
+  { id: 'flip', files: variants('flip', 1), volume: 0.5 },
+  { id: 'undo', files: variants('undo', 1), volume: 0.45 },
+  { id: 'redo', files: variants('redo', 1), volume: 0.45 },
+  { id: 'save', files: variants('save', 1), volume: 0.55 },
+  { id: 'load', files: variants('load', 1), volume: 0.5 },
+];
 
 // Textura branca genérica pros blocos/interactables da Fase 1 (paredes,
 // alavancas, portas etc.) — tingida via setTint() pra cada cor, em vez de

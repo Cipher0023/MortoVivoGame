@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../config/constants.js';
 import { isTouchEnabled } from './TouchControlsScene.js';
 import { createButton, createSmallButton } from '../ui/Button.js';
 import { addFullscreenButton } from '../ui/fullscreen.js';
+import { addSoundButton } from '../ui/soundButton.js';
 
 // HUD fixo de tela, em cena própria por cima da fase: assim o zoom/scroll da
 // câmera do jogo não desloca nem amplia os textos (setScrollFactor(0) não
@@ -30,14 +31,19 @@ export default class HudScene extends Phaser.Scene {
     this.isEditorTest = Boolean(play.returnTo);
     const exitLabel = this.isEditorTest ? 'Voltar ao editor' : 'Menu';
     const exitButton = createSmallButton(this, GAME_WIDTH - 16, 16, exitLabel, fontSize, () => play.exitLevel());
-    addFullscreenButton(this, GAME_WIDTH - 16 - exitButton.width - 12, 16, fontSize);
+    let rightX = GAME_WIDTH - 16 - exitButton.width - 12;
+    const fullscreenButton = addFullscreenButton(this, rightX, 16, fontSize);
+    if (fullscreenButton) rightX -= fullscreenButton.width + 12;
+    const soundButton = addSoundButton(this, rightX, 16, fontSize);
+    // M: liga/desliga o som (mesmo efeito do botão)
+    this.input.keyboard.on('keydown-M', () => soundButton.emit('pointerup'));
 
     // no touch, a dica de teclado ficaria embaixo do joystick/botões
     if (!touch) {
       this.add.text(
         16,
         GAME_HEIGHT - 44,
-        'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar | W/S: escada | Esc: sair',
+        'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar | W/S: escada | M: som | Esc: sair',
         {
           fontFamily: 'monospace',
           fontSize: '16px',

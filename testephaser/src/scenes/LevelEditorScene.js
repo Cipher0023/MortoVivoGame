@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, EDITOR_GRID, COLORS } from '../config/constants.js';
 import { TILE_MANIFEST, OBJECT_MANIFEST } from '../config/assetManifest.js';
 import { instantiateSprite } from '../levels/LevelLoader.js';
+import { playSfx } from '../audio/sfx.js';
 import {
   buildLevelData,
   downloadLevelJSON,
@@ -122,8 +123,14 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.buildFileInput();
 
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.input.keyboard.on('keydown-HOME', () => this.cameras.main.setScroll(0, this.cameras.main.scrollY));
-    this.input.keyboard.on('keydown-END', () => this.scrollToContentEnd());
+    this.input.keyboard.on('keydown-HOME', () => {
+      playSfx(this, 'tick');
+      this.cameras.main.setScroll(0, this.cameras.main.scrollY);
+    });
+    this.input.keyboard.on('keydown-END', () => {
+      playSfx(this, 'tick');
+      this.scrollToContentEnd();
+    });
     this.input.keyboard.on('keydown-P', () => this.startTest());
     // seleção: H/V espelham, C liga/desliga colisão, Del apaga, setas movem
     this.input.keyboard.on('keydown-H', () => this.flipSelection('x'));
@@ -137,7 +144,14 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-DOWN', (event) => this.handleArrow(event, 0, 1));
     // Esc: larga o pincel (volta a selecionar) e limpa a seleção
     // (carregando uma peça, Esc devolve ela pro lugar)
-    this.input.keyboard.on('keydown-ESC', () => (this.carry ? this.cancelCarry() : this.selectBrush(null)));
+    this.input.keyboard.on('keydown-ESC', () => {
+      if (this.carry) {
+        this.cancelCarry();
+        return;
+      }
+      playSfx(this, 'back');
+      this.selectBrush(null);
+    });
     this.input.keyboard.on('keydown-Z', (event) => {
       if (!(event.ctrlKey || event.metaKey)) return;
       event.preventDefault();
@@ -215,7 +229,10 @@ export default class LevelEditorScene extends Phaser.Scene {
       padding: { x: 8, y: 6 },
       ...style,
     }).setInteractive({ useHandCursor: true });
-    button.on('pointerdown', onClick);
+    button.on('pointerdown', (pointer) => {
+      playSfx(this, 'click');
+      onClick(pointer);
+    });
     return button;
   }
 
@@ -285,7 +302,10 @@ export default class LevelEditorScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(1000)
       .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.selectBrush({ type: 'sprite', key }, x, y));
+      .on('pointerdown', () => {
+        playSfx(this, 'select');
+        this.selectBrush({ type: 'sprite', key }, x, y);
+      });
   }
 
   addEntitySwatch(x, y, type) {
@@ -295,7 +315,10 @@ export default class LevelEditorScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(1000)
       .setInteractive({ useHandCursor: true });
-    bg.on('pointerdown', () => this.selectBrush({ type: 'entity', key: type }, x, y));
+    bg.on('pointerdown', () => {
+      playSfx(this, 'select');
+      this.selectBrush({ type: 'entity', key: type }, x, y);
+    });
     createEntityPreview(this, type, null, SWATCH_SIZE)
       .setPosition(x + SWATCH_SIZE / 2, y + SWATCH_SIZE / 2)
       .setScrollFactor(0)
@@ -317,7 +340,10 @@ export default class LevelEditorScene extends Phaser.Scene {
         ? this.add.circle(cx, cy, 16, CHANNEL_COLORS[channel])
         : this.add.circle(cx, cy, 16, 0x262645).setStrokeStyle(2, 0x8888aa);
       dot.setScrollFactor(0).setDepth(1000).setInteractive({ useHandCursor: true });
-      dot.on('pointerdown', () => this.selectChannel(channel));
+      dot.on('pointerdown', () => {
+        playSfx(this, 'select');
+        this.selectChannel(channel);
+      });
       if (!channel) this.uiText(cx, cy, 'sem', { fontSize: '10px', color: '#cccccc' }).setOrigin(0.5);
       this.channelOptions.push({ channel, cx, cy });
     });
@@ -458,6 +484,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     const current = this.panelSettings(id)[field];
     const next = Phaser.Math.Clamp(current + delta, min, max);
     if (next !== current) this.setAssetSettings(id, { [field]: next });
+    else playSfx(this, 'nope'); // já no limite
   }
 
   toggleAssetFlag(field) {
@@ -469,7 +496,10 @@ export default class LevelEditorScene extends Phaser.Scene {
   // Restaurar: a normal volta ao padrão; a espelhada volta a herdar da normal.
   resetAssetSettings() {
     const id = this.panelVariantId();
-    if (!id || !this.assetSettings[id]) return;
+    if (!id || !this.assetSettings[id]) {
+      playSfx(this, 'nope');
+      return;
+    }
     this.beforeMutate();
     delete this.assetSettings[id];
     this.afterAssetChange();
@@ -584,7 +614,9 @@ export default class LevelEditorScene extends Phaser.Scene {
         r0: toCell(Math.min(gesture.y, pointer.worldY)),
         r1: toCell(Math.max(gesture.y, pointer.worldY)),
       };
-      this.setSelection(this.piecesInArea(area), gesture.additive);
+      const pieces = this.piecesInArea(area);
+      playSfx(this, pieces.length > 0 ? 'select' : 'tick');
+      this.setSelection(pieces, gesture.additive);
       return;
     }
 
@@ -602,6 +634,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     // deve desfazer a seleção — então clique simples numa peça já
     // selecionada, sem Shift, mantém a seleção como está)
     if (piece && !gesture.additive && this.selection.has(piece) && this.selection.size > 1) return;
+    playSfx(this, piece ? 'select' : 'tick');
     if (piece) this.setSelection([piece], gesture.additive);
     else if (!gesture.additive) this.clearSelection();
   }
@@ -618,6 +651,7 @@ export default class LevelEditorScene extends Phaser.Scene {
       sprite[field] = !sprite[field];
       this.redrawSprite(sprite);
     }
+    playSfx(this, 'flip');
     this.selectionChanged();
   }
 
@@ -630,6 +664,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.beforeMutate();
     const turnOn = !sprites.every(pieceCollision);
     for (const sprite of sprites) sprite.collision = turnOn;
+    playSfx(this, 'toggle');
     this.selectionChanged();
   }
 
@@ -641,6 +676,7 @@ export default class LevelEditorScene extends Phaser.Scene {
       if (isSprite(piece)) this.removeSprite(piece);
       else this.removeEntity(entityKey(piece.col, piece.row, piece.type));
     }
+    playSfx(this, 'erase');
     this.clearSelection();
   }
 
@@ -652,10 +688,11 @@ export default class LevelEditorScene extends Phaser.Scene {
     const movedKeys = new Set(pieces.filter((p) => !isSprite(p)).map((p) => entityKey(p.col, p.row, p.type)));
     for (const piece of pieces) {
       const area = this.pieceArea(piece);
-      if (!this.areaFits({ c0: area.c0 + dc, c1: area.c1 + dc, r0: area.r0 + dr, r1: area.r1 + dr })) return;
+      const blocked = () => playSfx(this, 'nope');
+      if (!this.areaFits({ c0: area.c0 + dc, c1: area.c1 + dc, r0: area.r0 + dr, r1: area.r1 + dr })) return blocked();
       if (!isSprite(piece)) {
         const target = entityKey(piece.col + dc, piece.row + dr, piece.type);
-        if (this.entities.has(target) && !movedKeys.has(target)) return;
+        if (this.entities.has(target) && !movedKeys.has(target)) return blocked();
       }
     }
 
@@ -671,6 +708,7 @@ export default class LevelEditorScene extends Phaser.Scene {
         this.entities.set(entityKey(piece.col, piece.row, piece.type), piece);
       }
     }
+    playSfx(this, 'tick');
     this.drawSelection();
   }
 
@@ -705,6 +743,7 @@ export default class LevelEditorScene extends Phaser.Scene {
       pieces: pieces.map((p) => ({ piece: p, x: this.displayOf(p).x, y: this.displayOf(p).y })),
     };
     for (const { piece: p } of this.carry.pieces) this.displayOf(p).setAlpha(PREVIEW_ALPHA);
+    playSfx(this, 'pickup');
     this.setSelection(pieces);
     this.brushLabel.setText('Carregando: clique pra soltar · Esc ou botão direito devolve');
   }
@@ -734,8 +773,12 @@ export default class LevelEditorScene extends Phaser.Scene {
 
   dropCarry() {
     const carry = this.carry;
-    if (!carry.valid) return;
+    if (!carry.valid) {
+      playSfx(this, 'nope');
+      return;
+    }
     this.carry = null;
+    playSfx(this, 'place');
     this.ghost.clear();
     for (const { piece } of carry.pieces) {
       piece.col += carry.dc;
@@ -762,6 +805,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     const carry = this.carry;
     if (!carry) return;
     this.carry = null;
+    playSfx(this, 'back');
     this.ghost.clear();
     for (const { piece, x, y } of carry.pieces) {
       this.displayOf(piece).setPosition(x, y).setAlpha(1);
@@ -924,6 +968,7 @@ export default class LevelEditorScene extends Phaser.Scene {
         const data = await parseLevelFile(file);
         this.loadLevelData(data);
       } catch (err) {
+        playSfx(this, 'error');
         window.alert('Erro ao carregar fase: ' + err.message);
       }
     });
@@ -1074,6 +1119,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.beforeMutate();
     for (const sprite of overlapping) this.removeSprite(sprite);
     this.addSprite({ key, col: cell.col, row: cell.row });
+    playSfx(this, 'place');
   }
 
   // collision ausente = padrão do asset (ver pieceCollision)
@@ -1125,6 +1171,7 @@ export default class LevelEditorScene extends Phaser.Scene {
       }
     }
     this.addEntity({ type, col: cell.col, row: cell.row, channel });
+    playSfx(this, 'place');
   }
 
   addEntity({ type, col, row, channel }) {
@@ -1152,6 +1199,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     if (entityHit) {
       this.beforeMutate();
       this.removeEntity(entityHit);
+      playSfx(this, 'erase');
       return;
     }
 
@@ -1160,6 +1208,9 @@ export default class LevelEditorScene extends Phaser.Scene {
     if (spriteHit) {
       this.beforeMutate();
       this.removeSprite(spriteHit);
+      playSfx(this, 'erase');
+    } else {
+      playSfx(this, 'nope');
     }
   }
 
@@ -1184,6 +1235,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     const filename = window.prompt('Nome do arquivo (pra virar uma fase do livro: fase2.json, fase3.json...):', 'fase2.json');
     if (!filename) return;
     downloadLevelJSON(data, filename.endsWith('.json') ? filename : `${filename}.json`);
+    playSfx(this, 'save');
     this.isDirty = false;
     this.clearAutosave();
   }
@@ -1201,6 +1253,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     }
     const data = getOfficialLevel(id);
     if (!data) {
+      playSfx(this, 'error');
       window.alert(`Não encontrei a fase oficial "${id}".`);
       return;
     }
@@ -1211,6 +1264,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     if (confirmFirst) {
       if (!window.confirm('Limpar toda a fase?')) return;
       this.beforeMutate();
+      playSfx(this, 'erase');
     }
     this.removeEverything();
     this.assetSettings = {};
@@ -1239,6 +1293,7 @@ export default class LevelEditorScene extends Phaser.Scene {
   }
 
   loadLevelData(data) {
+    playSfx(this, 'load');
     this.applyLevelData(data);
     this.undoStack = [];
     this.redoStack = [];
@@ -1255,9 +1310,11 @@ export default class LevelEditorScene extends Phaser.Scene {
     const data = this.currentLevelData();
     const problems = findLevelProblems(data);
     if (problems.length > 0) {
+      playSfx(this, 'error');
       window.alert(`Pra testar, falta: ${problems.join(', ')}.`);
       return;
     }
+    playSfx(this, 'confirm');
     this.isPainting = false;
     this.ghost.clear();
     this.positionBrushPreview(null);
@@ -1279,7 +1336,11 @@ export default class LevelEditorScene extends Phaser.Scene {
 
   undo() {
     this.cancelCarry();
-    if (this.undoStack.length === 0) return;
+    if (this.undoStack.length === 0) {
+      playSfx(this, 'nope');
+      return;
+    }
+    playSfx(this, 'undo');
     this.redoStack.push(this.currentLevelData());
     this.applyLevelData(this.undoStack.pop());
     this.isDirty = true;
@@ -1287,7 +1348,11 @@ export default class LevelEditorScene extends Phaser.Scene {
 
   redo() {
     this.cancelCarry();
-    if (this.redoStack.length === 0) return;
+    if (this.redoStack.length === 0) {
+      playSfx(this, 'nope');
+      return;
+    }
+    playSfx(this, 'redo');
     this.undoStack.push(this.currentLevelData());
     this.applyLevelData(this.redoStack.pop());
     this.isDirty = true;
@@ -1343,6 +1408,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     if (this.isDirty && !window.confirm('Você tem alterações não salvas no editor. Sair mesmo assim?')) {
       return;
     }
+    playSfx(this, 'back');
     this.scene.start('MainMenu');
   }
 

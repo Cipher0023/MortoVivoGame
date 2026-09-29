@@ -1,4 +1,5 @@
 import TexturedBlock from '../entities/TexturedBlock.js';
+import { playSfx } from '../audio/sfx.js';
 
 // Parede estática que pode sumir/aparecer: portão, grade, ponte.
 export default class StaticWall extends TexturedBlock {
@@ -25,7 +26,9 @@ export default class StaticWall extends TexturedBlock {
   }
 
   destroyWall() {
+    if (this.destroyed) return;
     this.destroyed = true;
     this.setSolid(false);
+    playSfx(this.scene, 'gateOpen');
   }
 }

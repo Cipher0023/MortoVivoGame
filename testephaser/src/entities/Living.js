@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { PHYSICS } from '../config/constants.js';
 import { BOY_WALK_FRAME_COUNT } from '../config/assetManifest.js';
+import { playSfx } from '../audio/sfx.js';
 
 // Ciclo de caminhada do menino (ver playerController.js do game2.0): frameRate
 // 16, sem frames de pulo no acervo — parado/no ar sempre volta pro frame 1.
@@ -72,6 +73,7 @@ export default class Living extends Phaser.GameObjects.Sprite {
 
     if (input.jump && this.body.blocked.down) {
       this.body.setVelocityY(PHYSICS.JUMP_VELOCITY);
+      playSfx(this.scene, 'jump');
     }
 
     if (this.body.blocked.down && isWalking) {

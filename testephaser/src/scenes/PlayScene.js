@@ -18,6 +18,7 @@ import { buildLevelFromData, disableInternalFaces } from '../levels/LevelLoader.
 import { settingsFor, spriteArea } from '../levels/assetSettings.js';
 import { ENTITY_SHAPES, entityCenter, createChannelMarker } from '../levels/entityCatalog.js';
 import { isTouchEnabled } from './TouchControlsScene.js';
+import { playSfx } from '../audio/sfx.js';
 
 // Joga qualquer fase no formato do editor (tiles + decorações + peças de
 // mecânica, ver entityCatalog). As fases oficiais (src/levels/data) e o
@@ -33,6 +34,12 @@ const WATER_SURFACE_INSET = 14;
 const FALL_DEATH_MARGIN = 80;
 // fração do joystick/teclado pra agarrar a escada
 const CLIMB_GRAB = 0.3;
+// sons de movimento: intervalo entre passos/degraus/arrasto (ms) e a
+// velocidade de queda mínima pra aterrissagem fazer barulho
+const STEP_INTERVAL = 280;
+const CLIMB_INTERVAL = 220;
+const PUSH_INTERVAL = 160;
+const LAND_MIN_FALL_SPEED = 200;
 
 export default class PlayScene extends Phaser.Scene {
   constructor() {
@@ -67,6 +74,8 @@ export default class PlayScene extends Phaser.Scene {
     this.createInput();
     this.createColliders();
     this.createHUD();
+    this.pushSoundTimer = 0;
+    this.skeletonInWater = false;
   }
 
   // ---------------------------------------------------------------------
@@ -163,8 +172,10 @@ export default class PlayScene extends Phaser.Scene {
           bridge.body.checkCollision.right = false;
           if (e.channel) {
             this.onChannel(e.channel, () => {
+              if (bridge.body.enable) return;
               bridge.setColor(COLORS.BRIDGE_ACTIVE);
               bridge.setSolid(true);
+              playSfx(this, 'bridge');
             });
           }
           this.bridges.push(bridge);
@@ -347,8 +358,9 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------
   // Loop principal
   // ---------------------------------------------------------------------
-  update() {
+  update(time, delta) {
     if (Phaser.Input.Keyboard.JustDown(this.keys.back)) {
+      playSfx(this, 'back');
       this.exitLevel();
       return;
     }
@@ -379,12 +391,14 @@ export default class PlayScene extends Phaser.Scene {
     const switchPressed = Phaser.Input.Keyboard.JustDown(k.switchKey);
     if (this.consumeTouchPress('switch') || switchPressed) {
       this.characterManager.switchCharacter();
+      playSfx(this, 'switch');
     }
 
     // parceiro: segue por padrão; F / botão ESPERAR manda esperar e libera
     const waitPressed = Phaser.Input.Keyboard.JustDown(k.wait);
     if (this.consumeTouchPress('wait') || waitPressed) {
       this.followSystem.toggleWait(this.characterManager.getInactive());
+      playSfx(this, this.followSystem.waiting ? 'wait' : 'follow');
     }
     this.followSystem.update(this.characterManager.getActive(), this.characterManager.getInactive());
 
@@ -394,14 +408,18 @@ export default class PlayScene extends Phaser.Scene {
     // prioridade de interação: alavancas > modo fino (Esqueleto)
     if (actionJustDown) {
       const lever = this.levers.find((candidate) => this.physics.overlap(active, candidate));
-      if (lever) {
+      if (lever && !lever.pulled) {
         lever.toggle();
-      } else if (active === this.skeleton && this.canToggleThin()) {
+      } else if (!lever && active === this.skeleton && this.canToggleThin()) {
         this.skeleton.toggleThin();
+      } else {
+        // nada pra fazer aqui (alavanca já puxada, Vivo sem alvo, Esqueleto
+        // preso fino dentro da grade): som de "não dá"
+        playSfx(this, 'nope');
       }
     }
 
-    this.handleBoxPush(active, moveX, actionHeld);
+    this.handleBoxPush(active, moveX, actionHeld, delta);
     this.updateDoors();
     for (const enemy of this.enemies) enemy.update();
 
@@ -411,6 +429,9 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
+    this.updateMovementSounds(this.living, 'step', delta);
+    this.updateMovementSounds(this.skeleton, 'stepBone', delta);
+    this.updateWaterSplash();
     this.updateHUD(active);
   }
 
@@ -448,7 +469,7 @@ export default class PlayScene extends Phaser.Scene {
 
   // moveX: eixo de -1 a 1 — a caixa anda na mesma proporção que o Vivo.
   // Empurra a caixa encostada no Vivo, do lado pra onde ele está indo.
-  handleBoxPush(active, moveX, actionHeld) {
+  handleBoxPush(active, moveX, actionHeld, delta) {
     let pushed = null;
     if (active === this.living && actionHeld && moveX !== 0) {
       const living = this.living;
@@ -462,6 +483,53 @@ export default class PlayScene extends Phaser.Scene {
       if (box === pushed) box.push(moveX);
       else box.stop();
     }
+
+    // arrasto da caixa: som repetido enquanto empurra
+    this.pushSoundTimer = pushed ? this.pushSoundTimer - delta : 0;
+    if (pushed && this.pushSoundTimer <= 0) {
+      playSfx(this, 'push');
+      this.pushSoundTimer = PUSH_INTERVAL;
+    }
+  }
+
+  // Passos no chão (ritmo acompanha a velocidade), degraus na escada e
+  // baque ao aterrissar de uma queda. Vale pros dois personagens (o parceiro
+  // seguindo também faz barulho).
+  updateMovementSounds(character, stepSound, delta) {
+    const body = character.body;
+    const onGround = body.blocked.down || body.touching.down;
+    if (onGround && !character.wasOnGround && (character.lastVelocityY ?? 0) > LAND_MIN_FALL_SPEED) {
+      playSfx(this, 'land');
+    }
+    character.wasOnGround = onGround;
+    character.lastVelocityY = body.velocity.y;
+
+    let sound = null;
+    let interval = 0;
+    if (character.climbing && Math.abs(body.velocity.y) > 10) {
+      sound = 'climb';
+      interval = CLIMB_INTERVAL;
+    } else if (onGround && Math.abs(body.velocity.x) > 10) {
+      sound = stepSound;
+      const speed = Math.abs(body.velocity.x) / PHYSICS.MOVE_SPEED;
+      interval = STEP_INTERVAL / Math.max(speed, 0.4);
+    }
+    if (!sound) {
+      character.stepTimer = 0;
+      return;
+    }
+    character.stepTimer = (character.stepTimer ?? 0) - delta;
+    if (character.stepTimer <= 0) {
+      playSfx(this, sound);
+      character.stepTimer = interval;
+    }
+  }
+
+  // O Esqueleto afunda na água sem dano, mas faz "tchibum" ao entrar.
+  updateWaterSplash() {
+    const inWater = this.waters.length > 0 && this.physics.overlap(this.skeleton, this.waters);
+    if (inWater && !this.skeletonInWater) playSfx(this, 'splash');
+    this.skeletonInWater = inWater;
   }
 
   // Porta: abre quando quem está com a chave encosta. Abre a coluna inteira
@@ -505,6 +573,9 @@ export default class PlayScene extends Phaser.Scene {
     if (this.isResetting || this.levelComplete) return;
     this.isResetting = true;
     this.lastDeathReason = reason || 'unknown';
+    if (reason === 'water') playSfx(this, 'splash');
+    if (reason === 'enemy') playSfx(this, 'hit');
+    playSfx(this, reason === 'fall' ? 'fall' : 'death');
     this.physics.pause();
     this.cameras.main.flash(200, 200, 0, 0);
     this.time.delayedCall(350, () => this.scene.restart());
@@ -514,6 +585,7 @@ export default class PlayScene extends Phaser.Scene {
     if (this.levelComplete) return;
     this.levelComplete = true;
     this.physics.pause();
+    playSfx(this, 'win');
     this.hud.showLevelComplete();
   }
 }

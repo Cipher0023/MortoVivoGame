@@ -8,7 +8,10 @@ import {
   OBJECT_MANIFEST,
   BOY_WALK_MANIFEST,
   BLOCK_MANIFEST,
+  SOUNDS_PATH,
+  SOUND_MANIFEST,
 } from '../config/assetManifest.js';
+import { restoreMute, sfxKey } from '../audio/sfx.js';
 import { PHASES, findPhaseByScan } from '../config/phases.js';
 import { startPhase } from '../levels/startPhase.js';
 
@@ -30,9 +33,14 @@ export default class PreloadScene extends Phaser.Scene {
     for (const block of BLOCK_MANIFEST) {
       this.load.image(block.key, BLOCKS_PATH + block.file);
     }
+    for (const sound of SOUND_MANIFEST) {
+      sound.files.forEach((file, i) => this.load.audio(sfxKey(sound.id, i), SOUNDS_PATH + file));
+    }
   }
 
   create() {
+    restoreMute(this.game);
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('scene') === 'editor') {
       this.scene.start('LevelEditor');

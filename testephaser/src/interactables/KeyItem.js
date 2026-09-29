@@ -1,5 +1,6 @@
 import TexturedBlock from '../entities/TexturedBlock.js';
 import { COLORS } from '../config/constants.js';
+import { playSfx } from '../audio/sfx.js';
 
 export default class KeyItem extends TexturedBlock {
   constructor(scene, x, y, options = {}) {
@@ -18,6 +19,7 @@ export default class KeyItem extends TexturedBlock {
     this.revealed = true;
     this.setVisible(true);
     this.body.enable = true;
+    playSfx(this.scene, 'reveal');
   }
 
   collect() {
@@ -25,5 +27,6 @@ export default class KeyItem extends TexturedBlock {
     this.collected = true;
     this.setVisible(false);
     this.body.enable = false;
+    playSfx(this.scene, 'key');
   }
 }

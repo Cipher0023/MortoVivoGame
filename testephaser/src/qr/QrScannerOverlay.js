@@ -17,9 +17,11 @@ const DECODE_INTERVAL_MS = 120;
 export default class QrScannerOverlay {
   // onScan(texto) deve retornar true se aceitou o código (fecha o leitor) ou
   // uma mensagem de erro (string) pra mostrar e continuar lendo.
-  constructor({ onScan, onCancel }) {
+  // onSound(id): toca o som de um botão do próprio leitor (ver audio/sfx.js).
+  constructor({ onScan, onCancel, onSound }) {
     this.onScan = onScan;
     this.onCancel = onCancel;
+    this.onSound = onSound;
     this.stream = null;
     this.frameRequest = null;
     this.lastDecode = 0;
@@ -54,7 +56,10 @@ export default class QrScannerOverlay {
     this.context = this.canvas.getContext('2d', { willReadFrequently: true });
 
     this.root.querySelector('[data-action="cancel"]').addEventListener('click', () => this.onCancel());
-    this.root.querySelector('[data-action="manual"]').addEventListener('click', () => this.showManualEntry());
+    this.root.querySelector('[data-action="manual"]').addEventListener('click', () => {
+      this.onSound?.('click');
+      this.showManualEntry();
+    });
     this.manualForm.addEventListener('submit', (event) => {
       event.preventDefault();
       this.handleText(this.manualInput.value);

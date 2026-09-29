@@ -1,5 +1,6 @@
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/constants.js';
 import { createSmallButton } from './Button.js';
+import { playSfx } from '../audio/sfx.js';
 
 function isInstalledApp() {
   return (
@@ -69,5 +70,8 @@ function toggleInstallHint(scene) {
     .setOrigin(0.5)
     .setDepth(1000)
     .setInteractive()
-    .on('pointerup', () => toggleInstallHint(scene));
+    .on('pointerup', () => {
+      playSfx(scene, 'back');
+      toggleInstallHint(scene);
+    });
 }

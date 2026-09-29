@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../config/constants.js';
 import { createButton } from '../ui/Button.js';
+import { playSfx } from '../audio/sfx.js';
 
 // Tutorial de como entrar numa fase: escanear o QR code do livro. Três
 // passos em cartões; o botão final abre a câmera (ScanScene).
@@ -41,13 +42,20 @@ export default class TutorialScene extends Phaser.Scene {
     createButton(this, GAME_WIDTH / 2 - 380, 960, 'VOLTAR', () => this.scene.start('MainMenu'), {
       width: 320,
       color: 0x333355,
+      sound: 'back',
     });
     createButton(this, GAME_WIDTH / 2 + 170, 960, 'ABRIR CÂMERA', () => this.scene.start('Scan'), {
       width: 620,
     });
 
-    this.input.keyboard.once('keydown-ENTER', () => this.scene.start('Scan'));
-    this.input.keyboard.once('keydown-ESC', () => this.scene.start('MainMenu'));
+    this.input.keyboard.once('keydown-ENTER', () => {
+      playSfx(this, 'confirm');
+      this.scene.start('Scan');
+    });
+    this.input.keyboard.once('keydown-ESC', () => {
+      playSfx(this, 'back');
+      this.scene.start('MainMenu');
+    });
   }
 
   createCard(x, y, number, step) {

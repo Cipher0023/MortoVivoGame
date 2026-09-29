@@ -4,6 +4,7 @@ import { findPhaseByScan } from '../config/phases.js';
 import { createButton } from '../ui/Button.js';
 import QrScannerOverlay from '../qr/QrScannerOverlay.js';
 import { startPhase } from '../levels/startPhase.js';
+import { playSfx } from '../audio/sfx.js';
 
 // Abre a câmera (QrScannerOverlay, por cima do canvas) e manda o jogador pra
 // fase do QR code lido. Fase ainda não construída = aviso "em construção".
@@ -23,7 +24,9 @@ export default class ScanScene extends Phaser.Scene {
 
     this.scanner = new QrScannerOverlay({
       onScan: (text) => this.handleScan(text),
+      onSound: (id) => playSfx(this, id),
       onCancel: () => {
+        playSfx(this, 'back');
         // fecha já: com o celular em pé o jogo está pausado e a troca de
         // cena (que também fecharia o leitor) só roda ao girar o aparelho
         this.closeScanner();
@@ -43,10 +46,18 @@ export default class ScanScene extends Phaser.Scene {
 
   handleScan(text) {
     const phase = findPhaseByScan(text);
-    if (!phase) return 'Esse QR code não é de uma fase do livro. Procure o QR code na página da fase.';
+    if (!phase) {
+      playSfx(this, 'error');
+      return 'Esse QR code não é de uma fase do livro. Procure o QR code na página da fase.';
+    }
 
     this.closeScanner();
-    if (!startPhase(this, phase)) this.showComingSoon(phase);
+    if (startPhase(this, phase)) {
+      playSfx(this, 'scanOk');
+    } else {
+      playSfx(this, 'comingSoon');
+      this.showComingSoon(phase);
+    }
     return true;
   }
 
@@ -73,6 +84,7 @@ export default class ScanScene extends Phaser.Scene {
     createButton(this, GAME_WIDTH / 2 - 300, 760, 'MENU', () => this.scene.start('MainMenu'), {
       width: 400,
       color: 0x333355,
+      sound: 'back',
     });
     createButton(this, GAME_WIDTH / 2 + 250, 760, 'ESCANEAR OUTRA', () => this.scene.restart(), { width: 560 });
   }

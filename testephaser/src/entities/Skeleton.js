@@ -1,5 +1,6 @@
 import Character from './Character.js';
 import { COLORS } from '../config/constants.js';
+import { playSfx } from '../audio/sfx.js';
 
 export default class Skeleton extends Character {
   constructor(scene, x, y) {
@@ -13,5 +14,6 @@ export default class Skeleton extends Character {
     this.setSize(width, this.baseHeight);
     this.body.setSize(width, this.baseHeight, true);
     this.setAlpha(this.isThin ? 0.55 : 1);
+    playSfx(this.scene, this.isThin ? 'thin' : 'unthin');
   }
 }
