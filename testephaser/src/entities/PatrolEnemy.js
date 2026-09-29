@@ -1,23 +1,22 @@
-import Phaser from 'phaser';
-import { COLORS } from '../config/constants.js';
+import Enemy from './Enemy.js';
+import { COLORS, ENEMY } from '../config/constants.js';
 
 // Inimigo de patrulha: anda de um lado pro outro sozinho e dá meia-volta ao
 // bater em algo sólido ou chegar numa beirada — funciona em qualquer fase
-// montada no editor, sem precisar marcar limites. Só mata o Vivo.
-export default class PatrolEnemy extends Phaser.GameObjects.Rectangle {
-  constructor(scene, x, y, size = 36, speed = 80) {
-    super(scene, x, y, size, size, COLORS.PATROL_ENEMY);
-    this.scene = scene;
+// montada no editor, sem precisar marcar limites. Baixo ou alto (só muda o
+// tamanho).
+export default class PatrolEnemy extends Enemy {
+  constructor(scene, x, y, width = 36, height = width, color = COLORS.PATROL_ENEMY, speed = ENEMY.PATROL_SPEED) {
+    super(scene, x, y, width, height, color);
     this.speed = speed;
-    this.direction = 1;
-
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
-    this.body.allowGravity = false;
     this.body.setVelocityX(this.speed);
   }
 
-  update() {
+  act() {
+    this.patrol();
+  }
+
+  patrol() {
     const blocked = this.direction > 0 ? this.body.blocked.right : this.body.blocked.left;
     if (blocked || !this.scene.hasGroundAhead(this, this.direction)) {
       this.direction *= -1;

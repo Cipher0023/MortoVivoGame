@@ -25,9 +25,14 @@ const JOYSTICK_ZONE = { maxX: GAME_WIDTH * 0.45, minY: 160 };
 const BUTTONS = [
   { id: 'jump', label: 'PULAR', x: GAME_WIDTH - 200, y: GAME_HEIGHT - 300, radius: 115, color: 0x33aa66 },
   { id: 'action', label: 'AÇÃO', x: GAME_WIDTH - 440, y: GAME_HEIGHT - 170, radius: 105, color: 0xcc8833 },
+  // segurar mira, soltar arremessa (braço da Esqueleto)
+  { id: 'attack', label: 'BRAÇO', x: GAME_WIDTH - 440, y: GAME_HEIGHT - 430, radius: 95, color: 0xaa3355 },
+  // Esqueleto tira/põe a cabeça (acima do PULAR)
+  { id: 'head', label: 'CABEÇA', x: GAME_WIDTH - 200, y: GAME_HEIGHT - 540, radius: 75, color: 0x777766 },
   { id: 'switch', label: 'TROCAR', x: GAME_WIDTH / 2 - 90, y: 80, radius: 70, color: 0x5555aa },
   // rótulo alterna ESPERAR/SEGUIR (a fase chama setButtonLabel)
   { id: 'wait', label: 'ESPERAR', x: GAME_WIDTH / 2 + 90, y: 80, radius: 70, color: 0x996633 },
+
 ];
 // Margem extra de toque além do círculo desenhado (dedo não é preciso).
 const HIT_SLOP = 1.2;

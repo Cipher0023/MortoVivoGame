@@ -15,7 +15,12 @@ export const ENTITY_TYPES = {
   living: { label: 'Vivo', unique: true },
   skeleton: { label: 'Esqueleto', unique: true },
   exit: { label: 'Saída' },
-  enemy: { label: 'Inimigo' },
+  enemy: { label: 'Inimigo (vai e volta)' },
+  enemyTall: { label: 'Inimigo alto (vai e volta)' },
+  chaserTall: { label: 'Inimigo alto que persegue' },
+  chaser: { label: 'Inimigo baixo que persegue' },
+  flyer: { label: 'Voador (linha reta)' },
+  diver: { label: 'Mergulhador' },
   water: { label: 'Água', paint: true },
   box: { label: 'Caixa' },
   key: { label: 'Chave', channel: 'optional' },
@@ -28,7 +33,9 @@ export const ENTITY_TYPES = {
   ladder: { label: 'Escada', paint: true, channel: 'optional' },
 };
 
-export const ENTITY_ORDER = Object.keys(ENTITY_TYPES);
+// Inimigos têm um grupo próprio na paleta do editor (ver LevelEditorScene).
+export const ENEMY_ORDER = ['enemy', 'enemyTall', 'chaserTall', 'chaser', 'flyer', 'diver'];
+export const ENTITY_ORDER = Object.keys(ENTITY_TYPES).filter((type) => !ENEMY_ORDER.includes(type));
 
 // Cores de conexão: gatilho e alvos da mesma cor ficam ligados.
 export const CHANNEL_COLORS = {
@@ -41,10 +48,16 @@ export const CHANNELS = [1, 2, 3, 4];
 
 // Tamanho de cada peça dentro da célula (em px de mundo, célula = 64) e
 // alinhamento vertical: 'bottom' apoia no chão da célula, 'top' fica no teto,
-// 'center'/'fill' ocupam o meio/a célula toda.
+// 'center'/'fill' ocupam o meio/a célula toda. Os inimigos altos passam da
+// célula pra cima: coloque-os na célula dos pés.
 export const ENTITY_SHAPES = {
   exit: { w: 50, h: 14, align: 'bottom', color: COLORS.EXIT_BUTTON },
   enemy: { w: 36, h: 36, align: 'bottom', color: COLORS.PATROL_ENEMY },
+  enemyTall: { w: 36, h: 96, align: 'bottom', color: COLORS.TALL_PATROL_ENEMY },
+  chaserTall: { w: 36, h: 96, align: 'bottom', color: COLORS.TALL_CHASER },
+  chaser: { w: 30, h: 30, align: 'bottom', color: COLORS.CHASER },
+  flyer: { w: 44, h: 24, align: 'center', color: COLORS.FLYER },
+  diver: { w: 40, h: 28, align: 'center', color: COLORS.DIVER },
   water: { w: 64, h: 64, align: 'fill', color: COLORS.WATER },
   box: { w: 60, h: 60, align: 'bottom', texture: 'caixa2' },
   key: { w: 18, h: 18, align: 'center', color: COLORS.KEY },
@@ -82,11 +95,14 @@ export function createEntityPreview(scene, type, channel, size = 64) {
     parts.push(scene.add.rectangle(0, 6 * scale, 30 * scale, 50 * scale, COLORS.SKELETON));
   } else {
     const shape = ENTITY_SHAPES[type];
-    const offsetY = entityCenter(type, 0, 0, 64).y - 32;
+    // na paleta (size < 64), peça maior que a célula (inimigo alto) é
+    // encolhida e centrada pra caber no quadradinho; na grade, tamanho real
+    const fit = size < 64 ? Math.min(1, 64 / Math.max(shape.w, shape.h)) : 1;
+    const offsetY = fit < 1 ? 0 : entityCenter(type, 0, 0, 64).y - 32;
     const piece = shape.texture
       ? scene.add.image(0, offsetY * scale, shape.texture)
       : scene.add.image(0, offsetY * scale, 'bloco-solido').setTint(shape.color);
-    piece.setDisplaySize(shape.w * scale, shape.h * scale);
+    piece.setDisplaySize(shape.w * scale * fit, shape.h * scale * fit);
     // "escondida até acionar" fica meio transparente no editor
     if (channel && isHiddenUntilTriggered(type)) piece.setAlpha(0.5);
     if (type === 'water') piece.setAlpha(0.6);

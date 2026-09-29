@@ -17,6 +17,8 @@ export default class Character extends Phaser.GameObjects.Rectangle {
 
     this.isActive = false;
     this.hasKey = false;
+    this.facing = 1;
+    this.jumpVelocity = PHYSICS.JUMP_VELOCITY;
   }
 
   setActiveControl(active) {
@@ -32,9 +34,11 @@ export default class Character extends Phaser.GameObjects.Rectangle {
   // intermediários = andar mais devagar).
   handleMovement(input) {
     this.body.setVelocityX(PHYSICS.MOVE_SPEED * input.x);
+    // lado pra onde está virado (mira do arremesso da Esqueleto)
+    if (input.x !== 0) this.facing = Math.sign(input.x);
 
     if (input.jump && this.body.blocked.down) {
-      this.body.setVelocityY(PHYSICS.JUMP_VELOCITY);
+      this.body.setVelocityY(this.jumpVelocity);
       playSfx(this.scene, 'jump');
     }
   }

@@ -5,6 +5,7 @@ import { createButton } from '../ui/Button.js';
 import QrScannerOverlay from '../qr/QrScannerOverlay.js';
 import { startPhase } from '../levels/startPhase.js';
 import { playSfx } from '../audio/sfx.js';
+import { onPadMenu } from '../input/gamepad.js';
 
 // Abre a câmera (QrScannerOverlay, por cima do canvas) e manda o jogador pra
 // fase do QR code lido. Fase ainda não construída = aviso "em construção".
@@ -25,18 +26,22 @@ export default class ScanScene extends Phaser.Scene {
     this.scanner = new QrScannerOverlay({
       onScan: (text) => this.handleScan(text),
       onSound: (id) => playSfx(this, id),
-      onCancel: () => {
-        playSfx(this, 'back');
-        // fecha já: com o celular em pé o jogo está pausado e a troca de
-        // cena (que também fecharia o leitor) só roda ao girar o aparelho
-        this.closeScanner();
-        this.scene.start('MainMenu');
-      },
+      onCancel: () => this.cancel(),
     });
     this.scanner.open();
+    // controle: B/Select = Voltar
+    this.removePadMenu = onPadMenu(this, { onBack: () => this.cancel() });
 
     // qualquer saída da cena (inclusive pelo navegador) desliga a câmera
     this.events.once('shutdown', () => this.closeScanner());
+  }
+
+  cancel() {
+    playSfx(this, 'back');
+    // fecha já: com o celular em pé o jogo está pausado e a troca de
+    // cena (que também fecharia o leitor) só roda ao girar o aparelho
+    this.closeScanner();
+    this.scene.start('MainMenu');
   }
 
   closeScanner() {
@@ -63,6 +68,7 @@ export default class ScanScene extends Phaser.Scene {
 
   showComingSoon(phase) {
     this.children.removeAll(true);
+    this.removePadMenu();
     this.add
       .text(GAME_WIDTH / 2, 360, `${phase.title}`, {
         fontFamily: 'monospace',
@@ -87,5 +93,16 @@ export default class ScanScene extends Phaser.Scene {
       sound: 'back',
     });
     createButton(this, GAME_WIDTH / 2 + 250, 760, 'ESCANEAR OUTRA', () => this.scene.restart(), { width: 560 });
+    // controle: A = escanear outra, B/Select = menu
+    onPadMenu(this, {
+      onConfirm: () => {
+        playSfx(this, 'confirm');
+        this.scene.restart();
+      },
+      onBack: () => {
+        playSfx(this, 'back');
+        this.scene.start('MainMenu');
+      },
+    });
   }
 }

@@ -4,6 +4,14 @@ import { isTouchEnabled } from './TouchControlsScene.js';
 import { createButton, createSmallButton } from '../ui/Button.js';
 import { addFullscreenButton } from '../ui/fullscreen.js';
 import { addSoundButton } from '../ui/soundButton.js';
+import { onPadMenu } from '../input/gamepad.js';
+import { playSfx } from '../audio/sfx.js';
+
+const KEYBOARD_HINT =
+  'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar/puxar | C: cabeça | R (segurar/soltar): braço | W/S: escada | M: som | Esc: sair';
+// botões no layout Xbox (no PlayStation: A = ✕, B = ○, X = □, Y = △)
+const GAMEPAD_HINT =
+  'Controle — analógico/direcional: mover e escada | A: pular | X: ação | B ou RT (segurar/soltar): braço | Y: trocar | LB: esperar/seguir | RB: cabeça | Select: sair';
 
 // HUD fixo de tela, em cena própria por cima da fase: assim o zoom/scroll da
 // câmera do jogo não desloca nem amplia os textos (setScrollFactor(0) não
@@ -38,20 +46,20 @@ export default class HudScene extends Phaser.Scene {
     // M: liga/desliga o som (mesmo efeito do botão)
     this.input.keyboard.on('keydown-M', () => soundButton.emit('pointerup'));
 
-    // no touch, a dica de teclado ficaria embaixo do joystick/botões
+    // no touch, a dica de teclado ficaria embaixo do joystick/botões; com
+    // um controle conectado, a dica mostra os botões dele
     if (!touch) {
-      this.add.text(
-        16,
-        GAME_HEIGHT - 44,
-        'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar | W/S: escada | M: som | Esc: sair',
-        {
-          fontFamily: 'monospace',
-          fontSize: '16px',
-          color: '#ffffff',
-          backgroundColor: '#00000088',
-          padding: { x: 8, y: 6 },
-        }
-      );
+      const hint = this.add.text(16, GAME_HEIGHT - 44, KEYBOARD_HINT, {
+        fontFamily: 'monospace',
+        fontSize: '16px',
+        color: '#ffffff',
+        backgroundColor: '#00000088',
+        padding: { x: 8, y: 6 },
+      });
+      const gamepad = this.input.gamepad;
+      if (gamepad?.total > 0) hint.setText(GAMEPAD_HINT);
+      gamepad?.on('connected', () => hint.setText(GAMEPAD_HINT));
+      gamepad?.on('disconnected', () => hint.setText(gamepad.total > 0 ? GAMEPAD_HINT : KEYBOARD_HINT));
     }
   }
 
@@ -70,13 +78,18 @@ export default class HudScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const play = this.scene.get('Play');
-    if (this.isEditorTest) {
-      createButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, 'VOLTAR AO EDITOR', () => play.exitLevel(), {
-        width: 620,
-      });
-      return;
-    }
-    // direto pra câmera (o tutorial já foi visto): escanear a próxima fase do livro
-    createButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, 'PRÓXIMA FASE', () => play.leaveTo('Scan'));
+    // direto pra câmera (o tutorial já foi visto): escanear a próxima fase do
+    // livro; no teste do editor, volta pro editor
+    const [label, next] = this.isEditorTest
+      ? ['VOLTAR AO EDITOR', () => play.exitLevel()]
+      : ['PRÓXIMA FASE', () => play.leaveTo('Scan')];
+    createButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, label, next, { width: this.isEditorTest ? 620 : 460 });
+    // controle: A confirma o botão
+    onPadMenu(this, {
+      onConfirm: () => {
+        playSfx(this, 'confirm');
+        next();
+      },
+    });
   }
 }

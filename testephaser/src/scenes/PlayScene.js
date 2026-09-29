@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
-import { COLORS, PHYSICS, CAMERA } from '../config/constants.js';
+import { COLORS, PHYSICS, CAMERA, ATTACK, SKELETON, WATER, PULL_UP, SLOPE } from '../config/constants.js';
 import Living from '../entities/Living.js';
 import Skeleton from '../entities/Skeleton.js';
-import PatrolEnemy from '../entities/PatrolEnemy.js';
+import { createEnemy, isEnemyType } from '../entities/enemyTypes.js';
+import ThrownArm from '../entities/ThrownArm.js';
+import SkullHead from '../entities/SkullHead.js';
 import Hazard from '../hazards/Hazard.js';
 import StaticWall from '../interactables/StaticWall.js';
 import PushableBlock from '../interactables/PushableBlock.js';
@@ -15,16 +17,18 @@ import Ladder from '../interactables/Ladder.js';
 import CharacterManager from '../systems/CharacterManager.js';
 import FollowSystem from '../systems/FollowSystem.js';
 import { buildLevelFromData, disableInternalFaces } from '../levels/LevelLoader.js';
+import { supportY, surfaceY, slopeVelocity } from '../levels/slopes.js';
 import { settingsFor, spriteArea } from '../levels/assetSettings.js';
 import { ENTITY_SHAPES, entityCenter, createChannelMarker } from '../levels/entityCatalog.js';
 import { isTouchEnabled } from './TouchControlsScene.js';
 import { playSfx } from '../audio/sfx.js';
+import { PadReader, PAD } from '../input/gamepad.js';
 
 // Joga qualquer fase no formato do editor (tiles + decorações + peças de
 // mecânica, ver entityCatalog). As fases oficiais (src/levels/data) e o
 // "Testar" do editor passam por aqui.
 
-const NO_TOUCH = { x: 0, y: 0, jump: false, action: false };
+const NO_TOUCH = { x: 0, y: 0, jump: false, action: false, attack: false };
 // mundo nunca mais estreito que a visão da câmera com zoom (960px)
 const MIN_WORLD_COLS = 16;
 // a água "começa" um pouco abaixo do topo da célula da superfície: quem está
@@ -34,6 +38,11 @@ const WATER_SURFACE_INSET = 14;
 const FALL_DEATH_MARGIN = 80;
 // fração do joystick/teclado pra agarrar a escada
 const CLIMB_GRAB = 0.3;
+// limite de velocidade padrão de um corpo Arcade (fora d'água)
+const NORMAL_MAX_VELOCITY = 10000;
+// água desenhada por cima dos personagens (semitransparente): quem afunda
+// aparece submerso
+const WATER_DEPTH = 5;
 // sons de movimento: intervalo entre passos/degraus/arrasto (ms) e a
 // velocidade de queda mínima pra aterrissagem fazer barulho
 const STEP_INTERVAL = 280;
@@ -68,14 +77,25 @@ export default class PlayScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
     this.cameras.main.setZoom(CAMERA.ZOOM);
 
-    this.tileGroup = buildLevelFromData(this, this.levelData).tileGroup;
+    const level = buildLevelFromData(this, this.levelData);
+    this.tileGroup = level.tileGroup;
+    this.slopes = level.slopes;
+    this.rampBlockers = level.rampBlockers;
     this.createEntities();
     this.createCharacters();
     this.createInput();
     this.createColliders();
     this.createHUD();
     this.pushSoundTimer = 0;
-    this.skeletonInWater = false;
+    // ms que o Vivo está na água (morre em WATER.DROWN_MS). Soma o delta,
+    // como os timers do Phaser: com o jogo pausado (celular em pé) não conta.
+    this.drownElapsed = 0;
+    this.bubbleTimer = 0;
+    this.aim = null; // mira do arremesso em andamento: { startTime, angle }
+    this.arm = null; // braço arremessado (fora do corpo): { object, colliders }
+    this.aimGfx = this.add.graphics().setDepth(50);
+    this.head = null; // cabeça tirada da Esqueleto: { object, colliders }
+    this.collapseTimer = null; // Esqueleto desmontada: quando se remonta
   }
 
   // ---------------------------------------------------------------------
@@ -105,6 +125,10 @@ export default class PlayScene extends Phaser.Scene {
     for (const e of entities) {
       const { x, y } = entityCenter(e.type, e.col, e.row, S);
       const shape = ENTITY_SHAPES[e.type];
+      if (isEnemyType(e.type)) {
+        this.enemies.push(createEnemy(this, e.type, x, y));
+        continue;
+      }
 
       switch (e.type) {
         case 'living':
@@ -114,13 +138,14 @@ export default class PlayScene extends Phaser.Scene {
         case 'exit':
           this.exits.push(new ExitButton(this, x, y));
           break;
-        case 'enemy':
-          this.enemies.push(new PatrolEnemy(this, x, y, shape.w));
-          break;
+
         case 'water': {
           const inset = waterCells.has(`${e.col},${e.row - 1}`) ? 0 : WATER_SURFACE_INSET;
           const height = S - inset;
-          this.waters.push(new Hazard(this, x, e.row * S + inset + height / 2, S, height, COLORS.WATER, ['living']));
+          const water = new Hazard(this, x, e.row * S + inset + height / 2, S, height, COLORS.WATER, ['living']);
+          water.row = e.row; // pra achar a superfície (ver surfaceRow)
+          water.setDepth(WATER_DEPTH);
+          this.waters.push(water);
           break;
         }
         case 'box':
@@ -244,7 +269,13 @@ export default class PlayScene extends Phaser.Scene {
     const body = object.body;
     const probeX = body.center.x + dir * (body.halfWidth + 8);
     const bodies = this.physics.overlapRect(probeX - 4, body.bottom, 8, 24, true, true);
-    return bodies.some((found) => found.enable && this.floorObjects.has(found.gameObject));
+    if (bodies.some((found) => found.enable && this.floorObjects.has(found.gameObject))) return true;
+    // rampa à frente (subindo até um degrau, ou descendo até o fim da sonda)
+    return this.slopes.some((slope) => {
+      if (probeX < slope.x0 || probeX > slope.x1) return false;
+      const y = surfaceY(slope, probeX);
+      return y >= body.bottom - SLOPE.MAX_STEP * 2 && y <= body.bottom + 24;
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -265,8 +296,11 @@ export default class PlayScene extends Phaser.Scene {
       switchKey: kb.addKey('Q'),
       wait: kb.addKey('F'),
       action: kb.addKey('E'),
+      attack: kb.addKey('R'),
+      head: kb.addKey('C'),
       back: kb.addKey('ESC'),
     };
+    this.pad = new PadReader(this);
 
     // Controles touch: cena overlay que continua rodando entre restarts da
     // fase (morte) e é parada ao sair da fase (ver leaveTo()/exitLevel()).
@@ -322,14 +356,17 @@ export default class PlayScene extends Phaser.Scene {
     this.physics.add.collider(this.living, this.grates);
     this.physics.add.collider(this.skeleton, this.grates, null, (skeleton) => !skeleton.isThin);
 
-    this.physics.add.collider(this.boxes, [...solids, ...this.grates, ...this.bridges]);
+    this.physics.add.collider(this.boxes, [...solids, ...this.grates, ...this.bridges, this.rampBlockers]);
     this.physics.add.collider(this.boxes, this.boxes);
-    this.physics.add.collider(this.enemies, [...solids, ...this.grates, ...this.boxes]);
+    // inimigos e caixas não sobem rampa: pra eles, a rampa é um bloco
+    this.physics.add.collider(this.enemies, [...solids, ...this.grates, ...this.boxes, this.rampBlockers]);
 
-    // água funda: mata o Vivo; o Esqueleto afunda sem dano
-    this.physics.add.overlap(this.living, this.waters, () => this.triggerDeath('water'));
-    // inimigos: só detectam o Vivo
-    this.physics.add.overlap(this.living, this.enemies, () => this.triggerDeath('enemy'));
+    // água funda: o Vivo se afoga com o tempo (ver updateWater); o Esqueleto
+    // afunda sem dano
+    // inimigos: só detectam o Vivo — que os derrota caindo em cima
+    this.physics.add.overlap(this.living, this.enemies, (living, enemy) => this.onLivingTouchesEnemy(enemy));
+    // Vivo caindo em cima da Esqueleto: ela desmonta
+    this.physics.add.overlap(this.living, this.skeleton, () => this.onLivingTouchesSkeleton());
 
     // chave: qualquer um pega (uma por vez) e fica com quem pegou — é esse
     // personagem que precisa levá-la até a porta
@@ -359,7 +396,10 @@ export default class PlayScene extends Phaser.Scene {
   // Loop principal
   // ---------------------------------------------------------------------
   update(time, delta) {
-    if (Phaser.Input.Keyboard.JustDown(this.keys.back)) {
+    const pad = this.pad;
+    pad.update();
+    const backKeyPressed = Phaser.Input.Keyboard.JustDown(this.keys.back);
+    if (pad.pressed(PAD.SELECT) || backKeyPressed) {
       playSfx(this, 'back');
       this.exitLevel();
       return;
@@ -367,61 +407,72 @@ export default class PlayScene extends Phaser.Scene {
 
     if (this.isResetting || this.levelComplete) return;
 
-    // Teclado e touch valem ao mesmo tempo. Movimento é um eixo de -1 a 1:
-    // teclado dá -1/0/1 e tem prioridade; senão vale o joystick analógico.
-    // No touch, joystick pra cima só sobe escada; pulo é sempre o botão PULAR.
+    // Teclado, controle e touch valem ao mesmo tempo. Movimento é um eixo de
+    // -1 a 1: teclado dá -1/0/1 e tem prioridade; depois o controle; senão o
+    // joystick da tela. No controle e no touch, pra cima só sobe escada; pulo
+    // é sempre um botão (A / PULAR).
     const touch = this.getTouchState();
     const k = this.keys;
     const keyX = (k.right.isDown || k.rightD.isDown ? 1 : 0) - (k.left.isDown || k.leftA.isDown ? 1 : 0);
     const keyY = (k.down.isDown || k.downS.isDown ? 1 : 0) - (k.up.isDown || k.upW.isDown ? 1 : 0);
-    const moveX = keyX !== 0 ? keyX : touch.x;
-    const climbY = keyY !== 0 ? keyY : touch.y;
+    const moveX = keyX || pad.x || touch.x;
+    const climbY = keyY || pad.y || touch.y;
     // "pulo de verdade" (sem o ↑ do teclado): é o que solta da escada
-    const jumpButton = k.jump.isDown || touch.jump;
+    const jumpButton = k.jump.isDown || pad.held(PAD.A) || touch.jump;
     const jumpDown = jumpButton || k.up.isDown || k.upW.isDown;
-    const actionHeld = k.action.isDown || touch.action;
+    // (todos rodam: JustDown/consumePress só valem uma vez por aperto)
+    const jumpKeyPressed = [k.jump, k.up, k.upW].map((key) => Phaser.Input.Keyboard.JustDown(key)).some(Boolean);
+    const jumpPressed = this.consumeTouchPress('jump') || jumpKeyPressed || pad.pressed(PAD.A);
+    const actionHeld = k.action.isDown || pad.held(PAD.X) || touch.action;
+    const attackHeld = k.attack.isDown || pad.held(PAD.B, PAD.RT) || touch.attack;
+    const attackKeyPressed = Phaser.Input.Keyboard.JustDown(k.attack);
+    const attackPressed = this.consumeTouchPress('attack') || attackKeyPressed || pad.pressed(PAD.B, PAD.RT);
+
+    if (this.updateWater(delta)) return;
+    this.updateSlopes();
 
     const active = this.characterManager.getActive();
-    active.handleMovement({ x: moveX, jump: jumpDown });
+    // mirando o braço, a Esqueleto fica parada (←/→ só viram o lado)
+    const aiming = this.updateArmAim(active, attackHeld, attackPressed, moveX, time);
+    // pular ao lado do parceiro 1 bloco acima: ele puxa (no lugar do pulo)
+    const pulled = jumpPressed && !aiming && this.tryAutoPull(active);
+    active.handleMovement({ x: aiming ? 0 : moveX, jump: aiming || pulled ? false : jumpDown });
 
-    this.updateLadderClimbing(active, climbY, jumpButton);
+    this.updateLadderClimbing(active, aiming ? 0 : climbY, jumpButton);
 
     // troca de personagem
     // (os dois lados do || sempre rodam, pra consumir o aperto do touch)
     const switchPressed = Phaser.Input.Keyboard.JustDown(k.switchKey);
-    if (this.consumeTouchPress('switch') || switchPressed) {
+    if (this.consumeTouchPress('switch') || switchPressed || pad.pressed(PAD.Y)) {
       this.characterManager.switchCharacter();
       playSfx(this, 'switch');
     }
 
     // parceiro: segue por padrão; F / botão ESPERAR manda esperar e libera
     const waitPressed = Phaser.Input.Keyboard.JustDown(k.wait);
-    if (this.consumeTouchPress('wait') || waitPressed) {
+    if (this.consumeTouchPress('wait') || waitPressed || pad.pressed(PAD.LB)) {
       this.followSystem.toggleWait(this.characterManager.getInactive());
       playSfx(this, this.followSystem.waiting ? 'wait' : 'follow');
     }
     this.followSystem.update(this.characterManager.getActive(), this.characterManager.getInactive());
+    this.applySlopeSpeed();
 
     const actionKeyPressed = Phaser.Input.Keyboard.JustDown(k.action);
-    const actionJustDown = this.consumeTouchPress('action') || actionKeyPressed;
+    const actionJustDown = this.consumeTouchPress('action') || actionKeyPressed || pad.pressed(PAD.X);
 
-    // prioridade de interação: alavancas > modo fino (Esqueleto)
-    if (actionJustDown) {
-      const lever = this.levers.find((candidate) => this.physics.overlap(active, candidate));
-      if (lever && !lever.pulled) {
-        lever.toggle();
-      } else if (!lever && active === this.skeleton && this.canToggleThin()) {
-        this.skeleton.toggleThin();
-      } else {
-        // nada pra fazer aqui (alavanca já puxada, Vivo sem alvo, Esqueleto
-        // preso fino dentro da grade): som de "não dá"
-        playSfx(this, 'nope');
-      }
+    if (actionJustDown) this.handleAction(active);
+
+    // cabeça da Esqueleto: botão próprio (C / RB / CABEÇA), fora da ação
+    const headKeyPressed = Phaser.Input.Keyboard.JustDown(k.head);
+    if (this.consumeTouchPress('head') || headKeyPressed || pad.pressed(PAD.RB)) {
+      if (!(active === this.skeleton && this.skeletonHandlesHead())) playSfx(this, 'nope');
     }
 
     this.handleBoxPush(active, moveX, actionHeld, delta);
     this.updateDoors();
     for (const enemy of this.enemies) enemy.update();
+    this.updateThrownArm();
+    this.updateHead();
 
     const fallLine = this.worldHeight + FALL_DEATH_MARGIN;
     if (this.living.body.top > fallLine || this.skeleton.body.top > fallLine) {
@@ -431,8 +482,442 @@ export default class PlayScene extends Phaser.Scene {
 
     this.updateMovementSounds(this.living, 'step', delta);
     this.updateMovementSounds(this.skeleton, 'stepBone', delta);
-    this.updateWaterSplash();
     this.updateHUD(active);
+  }
+
+  // ---------------------------------------------------------------------
+  // Rampas (ver levels/slopes.js): a física Arcade só tem caixas, então a
+  // cada quadro quem está em cima de uma rampa é "apoiado" na superfície
+  // (antes do movimento, pra o pulo ver o apoio) e a velocidade horizontal é
+  // ajustada pela inclinação (depois do movimento).
+  // ---------------------------------------------------------------------
+  updateSlopes() {
+    if (this.slopes.length === 0) return;
+    const objects = [this.living, this.skeleton, this.head?.object, this.arm?.object];
+    for (const object of objects) {
+      if (!object?.body?.enable || object.beingPulled || object.climbing) continue;
+      object.onSlope = this.snapToSlope(object);
+      // braço voando que bate na rampa cai como numa parede
+      if (object.onSlope && object === this.arm?.object) object.land();
+    }
+  }
+
+  // Apoia o corpo na rampa sob ele (a mais alta, se houver duas). Mexe só no
+  // corpo: o desenho acompanha no fim do quadro. Retorna a rampa ou null.
+  snapToSlope(object) {
+    const body = object.body;
+    if (body.velocity.y < 0) return null; // pulando: solta da rampa
+    // quem já estava na rampa é "puxado" pra ela ao descer andando
+    const stick = object.onSlope ? SLOPE.STICK : 0;
+    let best = null;
+    let bestY = Infinity;
+    for (const slope of this.slopes) {
+      if (body.right <= slope.x0 || body.left >= slope.x1) continue;
+      const y = supportY(slope, body);
+      const sink = body.bottom - y;
+      if (sink < -stick || sink > SLOPE.MAX_STEP || y >= bestY) continue;
+      best = slope;
+      bestY = y;
+    }
+    if (!best) return null;
+    body.position.y += bestY - body.bottom;
+    body.updateCenter();
+    body.velocity.y = 0;
+    // na íngreme não há apoio pra pular
+    if (best.kind !== 'steep') body.blocked.down = true;
+    return best;
+  }
+
+  applySlopeSpeed() {
+    for (const character of [this.living, this.skeleton]) {
+      const slope = character.onSlope;
+      // escorregando: continua até sair dessa rampa (chegar ao pé dela)
+      const wasSliding = Boolean(slope) && character.slidingOn === slope;
+      character.slidingOn = null;
+      if (!slope || character.beingPulled) continue;
+      const { vx, sliding } = slopeVelocity(slope, character.body, character.body.velocity.x, wasSliding);
+      character.body.setVelocityX(vx);
+      if (sliding) character.slidingOn = slope;
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Ataques
+  // ---------------------------------------------------------------------
+  // Pisão do Vivo: caindo e vindo de cima (os pés estavam acima do topo do
+  // inimigo no quadro anterior) paralisa o inimigo e quica; qualquer outro
+  // contato com um inimigo ativo mata o Vivo.
+  // Paralisado, o inimigo não faz mal; pisar nele de novo quica e renova a
+  // paralisia.
+  onLivingTouchesEnemy(enemy) {
+    const body = this.living.body;
+    const previousBottom = body.prev.y + body.height;
+    const fromAbove = body.velocity.y > 0 && previousBottom <= enemy.body.top + ATTACK.STOMP_TOLERANCE;
+    if (!fromAbove) {
+      if (!enemy.stunned) this.triggerDeath('enemy');
+      return;
+    }
+    enemy.stun('stomp');
+    playSfx(this, 'stomp');
+    const jumpHeld = this.keys.jump.isDown || this.getTouchState().jump;
+    body.setVelocityY(jumpHeld ? PHYSICS.JUMP_VELOCITY : ATTACK.STOMP_BOUNCE);
+  }
+
+  // Arremesso do braço (Esqueleto): segurar o ataque mostra a mira, que
+  // oscila sozinha no arco; soltar arremessa no ângulo do momento. Só no
+  // chão e com o braço no corpo. Retorna true enquanto está mirando.
+  updateArmAim(active, held, pressed, moveX, time) {
+    const skeleton = this.skeleton;
+    const canAim =
+      active === skeleton && skeleton.hasArm && !skeleton.collapsed && isOnGround(skeleton) && !skeleton.climbing;
+
+    if (!this.aim) {
+      if (!pressed) return false;
+      if (!canAim) {
+        // Vivo não arremessa (ataca pulando na cabeça); Esqueleto sem o
+        // braço, no ar ou na escada também não
+        playSfx(this, 'nope');
+        return false;
+      }
+      this.aim = { startTime: time, angle: ATTACK.AIM_MIN_DEG };
+      playSfx(this, 'aim');
+    }
+
+    if (!canAim) {
+      this.cancelAim();
+      return false;
+    }
+    if (moveX !== 0) skeleton.facing = Math.sign(moveX);
+
+    // vai e volta entre as pontas do arco
+    const sweep = ((time - this.aim.startTime) / ATTACK.AIM_SWEEP_MS) % 2;
+    const t = sweep < 1 ? sweep : 2 - sweep;
+    this.aim.angle = ATTACK.AIM_MIN_DEG + (ATTACK.AIM_MAX_DEG - ATTACK.AIM_MIN_DEG) * t;
+
+    if (!held) {
+      this.throwArm(this.aim.angle);
+      this.cancelAim();
+      return false;
+    }
+    this.drawAim();
+    return true;
+  }
+
+  cancelAim() {
+    this.aim = null;
+    this.aimGfx.clear();
+  }
+
+  // ombro: de onde a mira sai e o braço é lançado
+  shoulder() {
+    return { x: this.skeleton.x + this.skeleton.facing * 8, y: this.skeleton.y - 12 };
+  }
+
+  // Trilho do arco (fraco) + seta no ângulo atual.
+  drawAim() {
+    const { x, y } = this.shoulder();
+    const facing = this.skeleton.facing;
+    const R = ATTACK.AIM_RADIUS;
+    const point = (deg, radius) => {
+      const rad = Phaser.Math.DegToRad(deg);
+      return { x: x + facing * radius * Math.cos(rad), y: y - radius * Math.sin(rad) };
+    };
+
+    const g = this.aimGfx.clear();
+    const track = [];
+    for (let deg = ATTACK.AIM_MIN_DEG; deg <= ATTACK.AIM_MAX_DEG; deg += 5) track.push(point(deg, R));
+    g.lineStyle(3, 0xffffff, 0.3).strokePoints(track);
+
+    const tip = point(this.aim.angle, R);
+    g.lineStyle(3, 0xffe066, 1).lineBetween(x, y, tip.x, tip.y);
+    g.fillStyle(0xffe066, 1).fillCircle(tip.x, tip.y, 6);
+  }
+
+  throwArm(angle) {
+    const { x, y } = this.shoulder();
+    const object = new ThrownArm(this, x, y, angle, this.skeleton.facing);
+    const solids = [this.tileGroup, ...this.gates, ...this.doors, ...this.bridges, ...this.boxes];
+    // passa pela grade (é fino como a Esqueleto no modo fino)
+    const colliders = [
+      this.physics.add.collider(object, solids, () => object.land()),
+      this.physics.add.overlap(object, this.enemies, (arm, enemy) => {
+        if (!object.flying) return;
+        enemy.stun('hit');
+        object.bounceOff();
+      }),
+      // caído no chão: a Esqueleto pega de volta encostando
+      this.physics.add.overlap(this.skeleton, object, () => {
+        if (!object.flying) this.pickUpArm();
+      }),
+    ];
+    this.arm = { object, colliders };
+    this.skeleton.hasArm = false;
+    playSfx(this, 'throw');
+  }
+
+  pickUpArm() {
+    if (!this.arm) return;
+    for (const collider of this.arm.colliders) collider.destroy();
+    this.arm.object.destroy();
+    this.arm = null;
+    this.skeleton.hasArm = true;
+    playSfx(this, 'armPickup');
+  }
+
+  updateThrownArm() {
+    if (!this.arm) return;
+    this.arm.object.update();
+    // caiu num buraco: o braço volta sozinho (senão a fase travaria)
+    if (this.arm.object.body.top > this.worldHeight + FALL_DEATH_MARGIN) this.pickUpArm();
+  }
+
+  // ---------------------------------------------------------------------
+  // Ação (E / botão AÇÃO). Prioridade: alavanca > puxar o parceiro > (Vivo)
+  // pegar/soltar a cabeça da Esqueleto ou agarrar caixa. Sem nada pra fazer:
+  // som de "não dá". Tirar/pôr a cabeça é outro botão (ver update).
+  // ---------------------------------------------------------------------
+  handleAction(active) {
+    const lever = this.levers.find((candidate) => this.physics.overlap(active, candidate));
+    if (lever) {
+      if (lever.pulled) playSfx(this, 'nope');
+      else lever.toggle();
+      return;
+    }
+    if (this.canPull(active, this.partnerOf(active))) {
+      this.pullPartner(active);
+      return;
+    }
+    const done = active === this.living && this.livingHandlesHead();
+    // ao lado de uma caixa, a ação é agarrá-la (ver handleBoxPush)
+    if (!done && !(active === this.living && this.boxesTouching(active).length > 0)) playSfx(this, 'nope');
+  }
+
+  livingHandlesHead() {
+    const head = this.head?.object;
+    if (!head) return false;
+    if (head.carrier === this.living) {
+      this.dropHeadFromLiving();
+      return true;
+    }
+    if (head.carrier || !this.isNear(this.living, head)) return false;
+    head.carry(this.living);
+    return true;
+  }
+
+  skeletonHandlesHead() {
+    const skeleton = this.skeleton;
+    if (skeleton.collapsed) return false;
+    if (skeleton.hasHead) {
+      this.removeHead();
+      return true;
+    }
+    const head = this.head.object;
+    // voltar ao tamanho normal dentro da grade faria ela atravessá-la (a
+    // sobreposição é grande demais pro Arcade separar)
+    if (head.carrier || !this.isNear(skeleton, head) || !this.canAttachHead()) return false;
+    this.attachHead();
+    return true;
+  }
+
+  isNear(character, object) {
+    return (
+      Math.abs(character.x - object.x) < SKELETON.HEAD_REACH_X &&
+      Math.abs(character.body.bottom - object.body.bottom) < SKELETON.HEAD_REACH_Y
+    );
+  }
+
+  // A cabeça cai atrás da Esqueleto (pra ela seguir em frente) e fica lá.
+  removeHead() {
+    const skeleton = this.skeleton;
+    const object = new SkullHead(this, skeleton.x - skeleton.facing * 20, skeleton.body.top);
+    const solids = [this.tileGroup, ...this.gates, ...this.doors, ...this.grates, ...this.bridges, ...this.boxes];
+    const colliders = [
+      this.physics.add.collider(object, solids),
+      // o Vivo sobe nela: sólida só pra quem vem de cima (passa por ela andando)
+      this.physics.add.collider(this.living, object, null, (living) => {
+        const body = living.body;
+        return body.velocity.y >= 0 && body.prev.y + body.height <= object.body.top + 4;
+      }),
+    ];
+    this.head = { object, colliders };
+    skeleton.removeHead();
+  }
+
+  attachHead() {
+    for (const collider of this.head.colliders) collider.destroy();
+    this.head.object.destroy();
+    this.head = null;
+    this.skeleton.attachHead();
+  }
+
+  // Solta na frente do Vivo; se ali tem parede/grade, solta onde ele está.
+  dropHeadFromLiving() {
+    const living = this.living;
+    const facing = living.flipX ? -1 : 1;
+    const half = SKELETON.HEAD_SIZE / 2;
+    let x = living.x + facing * 30;
+    const y = living.body.bottom - half - 2;
+    const blocked = this.physics
+      .overlapRect(x - half, y - half, half * 2, half * 2, false, true)
+      .some((body) => body.enable && this.isWall(body.gameObject));
+    if (blocked) x = living.x;
+    this.head.object.dropAt(x, y);
+  }
+
+  isWall(gameObject) {
+    return (
+      this.tileGroup.contains(gameObject) ||
+      this.gates.includes(gameObject) ||
+      this.doors.includes(gameObject) ||
+      this.grates.includes(gameObject)
+    );
+  }
+
+  updateHead() {
+    const head = this.head?.object;
+    if (!head) return;
+    head.followCarrier();
+    head.update();
+    // caiu num buraco: volta pra Esqueleto (senão ela ficaria fina pra sempre)
+    if (!head.carrier && head.body.top > this.worldHeight + FALL_DEATH_MARGIN) {
+      if (!this.skeleton.collapsed && this.canAttachHead()) this.attachHead();
+      else head.dropAt(this.skeleton.x, this.skeleton.body.top - SKELETON.HEAD_SIZE);
+    }
+  }
+
+  // Vivo caindo em cima da Esqueleto (mesmo teste do pisão): ela desmonta —
+  // pilha de ossos imóvel por SKELETON.COLLAPSE_MS — e o Vivo quica.
+  onLivingTouchesSkeleton() {
+    const skeleton = this.skeleton;
+    if (skeleton.collapsed) return;
+    const body = this.living.body;
+    const previousBottom = body.prev.y + body.height;
+    if (!(body.velocity.y > 0 && previousBottom <= skeleton.body.top + ATTACK.STOMP_TOLERANCE)) return;
+
+    skeleton.collapse();
+    body.setVelocityY(ATTACK.STOMP_BOUNCE);
+    this.collapseTimer = this.time.delayedCall(SKELETON.COLLAPSE_MS, () => {
+      this.collapseTimer = null;
+      skeleton.reassemble();
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Puxar o parceiro: quem está no chão, na borda, puxa o outro que está
+  // logo abaixo (num degrau mais baixo ou na água) pra cima, ao seu lado.
+  // ---------------------------------------------------------------------
+  partnerOf(character) {
+    return character === this.living ? this.skeleton : this.living;
+  }
+
+  // helper (em pé, em cima) pode puxar partner? Só com os pés de partner
+  // PULL_UP.LEVEL_DIFF bloco abaixo dos de helper, e lado a lado. Na água,
+  // vale qualquer profundidade até esse 1 bloco (mais fundo, ele se afoga).
+  canPull(helper, partner) {
+    if (helper.beingPulled || partner.beingPulled) return false;
+    if (helper.collapsed || helper.climbing || helper.inWater || !isOnGround(helper)) return false;
+    if (Math.abs(partner.x - helper.x) >= PULL_UP.REACH_X) return false;
+    const levels = (partner.body.bottom - helper.body.bottom) / this.cellSize;
+    const maxLevels = PULL_UP.LEVEL_DIFF + PULL_UP.LEVEL_TOLERANCE;
+    if (partner.inWater) return levels > 0 && levels <= maxLevels;
+    return Math.abs(levels - PULL_UP.LEVEL_DIFF) <= PULL_UP.LEVEL_TOLERANCE;
+  }
+
+  // O personagem controlado pulou: se o parceiro está 1 bloco acima, ao
+  // lado, ele o puxa. Retorna true se puxou.
+  tryAutoPull(active) {
+    const partner = this.partnerOf(active);
+    if (active.collapsed || !this.canPull(partner, active)) return false;
+    this.pullPartner(partner);
+    return true;
+  }
+
+  // Sobe o parceiro até ficar em pé ao lado de quem puxou (sem física
+  // durante a subida, pra não enroscar na quina).
+  pullPartner(helper) {
+    const partner = this.partnerOf(helper);
+    const target = { x: helper.x, y: helper.body.bottom - partner.body.height / 2 - 1 };
+    partner.beingPulled = true;
+    partner.climbing = false;
+    partner.body.setVelocity(0, 0);
+    partner.body.enable = false;
+    playSfx(this, 'pullUp');
+    this.tweens.add({
+      targets: partner,
+      x: target.x,
+      y: target.y,
+      duration: PULL_UP.DURATION_MS,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        partner.body.enable = true;
+        partner.body.reset(target.x, target.y);
+        partner.beingPulled = false;
+      },
+    });
+  }
+
+  // Linha (célula) da superfície da água sob o personagem, ou null.
+  surfaceRow(character) {
+    const reach = this.cellSize / 2 + character.body.halfWidth;
+    const rows = this.waters.filter((water) => Math.abs(water.x - character.x) < reach).map((water) => water.row);
+    return rows.length > 0 ? Math.min(...rows) : null;
+  }
+
+  sinkSpeed(living) {
+    const row = this.surfaceRow(living);
+    const plungeTo = row === null ? -Infinity : (row + WATER.PLUNGE_DEPTH) * this.cellSize;
+    return living.body.bottom < plungeTo ? WATER.PLUNGE_SPEED : WATER.SINK_SPEED;
+  }
+
+  // y dos pés além do qual o Vivo se afoga: mais que 1 bloco abaixo da borda
+  // — exatamente onde o parceiro deixa de alcançá-lo pra puxar (canPull).
+  drownDepth(living) {
+    const row = this.surfaceRow(living);
+    if (row === null) return Infinity;
+    return (row + PULL_UP.LEVEL_DIFF + PULL_UP.LEVEL_TOLERANCE) * this.cellSize;
+  }
+
+  // ---------------------------------------------------------------------
+  // Água: "tchibum" ao entrar (os dois). O Vivo não morre na hora: afunda
+  // devagar, fica lento e sem pulo (ver Living) e se afoga depois de
+  // WATER.DROWN_MS — tempo pro parceiro puxá-lo pra fora. Retorna true se
+  // ele se afogou.
+  // ---------------------------------------------------------------------
+  updateWater(delta) {
+    for (const character of [this.living, this.skeleton]) {
+      if (character.beingPulled) continue;
+      const inWater = this.waters.length > 0 && this.physics.overlap(character, this.waters);
+      if (inWater && !character.wasInWater) playSfx(this, 'splash');
+      character.wasInWater = inWater;
+    }
+
+    const living = this.living;
+    living.inWater = Boolean(living.wasInWater) && !living.beingPulled;
+    // mergulha até meio bloco e depois afunda devagar: o limite vale em cada
+    // passo da física (que pode rodar mais de um passo por quadro)
+    living.body.maxVelocity.y = living.inWater ? this.sinkSpeed(living) : NORMAL_MAX_VELOCITY;
+    if (!living.inWater) {
+      this.drownElapsed = 0;
+      this.bubbleTimer = 0;
+      living.clearTint();
+      return false;
+    }
+
+    this.drownElapsed += delta;
+    this.bubbleTimer -= delta;
+    if (this.bubbleTimer <= 0) {
+      playSfx(this, 'bubbles');
+      this.bubbleTimer = WATER.BUBBLE_INTERVAL_MS;
+    }
+    // pisca azul enquanto se afoga
+    if (Math.floor(this.drownElapsed / 250) % 2) living.setTint(0x6699ff);
+    else living.clearTint();
+
+    if (this.drownElapsed >= WATER.DROWN_MS || living.body.bottom > this.drownDepth(living)) {
+      this.triggerDeath('water');
+      return true;
+    }
+    return false;
   }
 
   getKeyHolder() {
@@ -447,7 +932,7 @@ export default class PlayScene extends Phaser.Scene {
       const onLadder = this.ladders.some((ladder) => ladder.dropped && this.physics.overlap(character, ladder));
       const isActive = character === active;
 
-      if (!onLadder || (isActive && jumpButton)) {
+      if (!onLadder || (isActive && jumpButton) || character.collapsed) {
         character.climbing = false;
       } else if (isActive && Math.abs(climbY) > CLIMB_GRAB) {
         character.climbing = true;
@@ -462,22 +947,31 @@ export default class PlayScene extends Phaser.Scene {
 
   // Voltar ao tamanho normal dentro de uma grade faria o Esqueleto
   // atravessá-la (a sobreposição é grande demais pro Arcade separar).
-  canToggleThin() {
-    if (!this.skeleton.isThin) return true;
+  canAttachHead() {
     return !this.grates.some((grate) => !grate.destroyed && this.physics.overlap(this.skeleton, grate));
   }
 
+  // caixas encostadas no personagem, de qualquer lado
+  boxesTouching(character) {
+    return this.boxes.filter((box) => {
+      const reach = box.displayWidth / 2 + character.body.halfWidth + 10;
+      return Math.abs(box.x - character.x) < reach && Math.abs(box.y - character.y) < 50;
+    });
+  }
+
   // moveX: eixo de -1 a 1 — a caixa anda na mesma proporção que o Vivo.
-  // Empurra a caixa encostada no Vivo, do lado pra onde ele está indo.
+  // Segurando a ação ao lado de uma caixa, o Vivo a agarra: andando pra ela
+  // empurra; andando pro lado oposto puxa (e anda na velocidade da caixa,
+  // senão se afastaria e soltaria).
   handleBoxPush(active, moveX, actionHeld, delta) {
     let pushed = null;
     if (active === this.living && actionHeld && moveX !== 0) {
       const living = this.living;
-      pushed = this.boxes.find((box) => {
-        const dx = box.x - living.x;
-        const reach = box.displayWidth / 2 + living.body.halfWidth + 10;
-        return Math.sign(dx) === Math.sign(moveX) && Math.abs(dx) < reach && Math.abs(box.y - living.y) < 50;
-      });
+      const touching = this.boxesTouching(living);
+      // a da frente (empurrar) tem preferência sobre a de trás (puxar)
+      const ahead = touching.find((box) => Math.sign(box.x - living.x) === Math.sign(moveX));
+      pushed = ahead ?? touching[0] ?? null;
+      if (pushed && !ahead) living.body.setVelocityX(PHYSICS.BLOCK_PUSH_SPEED * moveX);
     }
     for (const box of this.boxes) {
       if (box === pushed) box.push(moveX);
@@ -525,13 +1019,6 @@ export default class PlayScene extends Phaser.Scene {
     }
   }
 
-  // O Esqueleto afunda na água sem dano, mas faz "tchibum" ao entrar.
-  updateWaterSplash() {
-    const inWater = this.waters.length > 0 && this.physics.overlap(this.skeleton, this.waters);
-    if (inWater && !this.skeletonInWater) playSfx(this, 'splash');
-    this.skeletonInWater = inWater;
-  }
-
   // Porta: abre quando quem está com a chave encosta. Abre a coluna inteira
   // de células de porta encostadas e gasta a chave (uma chave, uma porta).
   updateDoors() {
@@ -558,11 +1045,43 @@ export default class PlayScene extends Phaser.Scene {
     const name = active === this.living ? 'Vivo (Bram)' : 'Esqueleto (Ossos)';
     const holder = this.getKeyHolder();
     const key = holder === this.living ? 'com o Vivo' : holder === this.skeleton ? 'com o Esqueleto' : 'Não';
-    const thin = this.skeleton.isThin ? ' [fino]' : '';
+    const skeleton = this.skeleton;
+    const states = [];
+    if (!skeleton.hasHead) states.push('sem cabeça');
+    if (this.collapseTimer) states.push(`desmontada ${Math.ceil(this.collapseTimer.getRemaining() / 1000)}s`);
+    const skeletonState = states.length ? ` [${states.join(', ')}]` : '';
+    const arm = skeleton.hasArm ? 'no corpo' : 'arremessado (vá buscar)';
+    const headCarrier = this.head?.object.carrier;
+    const head = skeleton.hasHead ? 'no corpo' : headCarrier ? 'com o Vivo' : 'no chão';
     // o create() da HudScene só roda no frame seguinte ao launch
     if (!this.hud.statusText) return;
     const waiting = this.followSystem.waiting;
-    this.hud.setStatus(`Personagem: ${name}${thin}\nChave: ${key}\nParceiro: ${waiting ? 'esperando' : 'seguindo'}`);
+    const alerts = [];
+    if (this.living.inWater) {
+      // o que vier primeiro: o tempo acabar ou afundar demais
+      const byTime = (WATER.DROWN_MS - this.drownElapsed) / 1000;
+      // no fundo de uma piscina rasa não afunda mais: vale só o tempo
+      const onBottom = this.living.body.blocked.down;
+      const byDepth = onBottom ? Infinity : (this.drownDepth(this.living) - this.living.body.bottom) / WATER.SINK_SPEED;
+      const left = Math.max(0, Math.ceil(Math.min(byTime, byDepth)));
+      let rescue = 'chegue perto da borda, 1 bloco abaixo do parceiro';
+      if (this.canPull(this.skeleton, this.living)) {
+        rescue = active === this.living ? 'pule pra ser puxado' : 'aperte a ação pra puxar';
+      }
+      alerts.push(`O Vivo está se afogando! ${left}s (${rescue})`);
+    }
+    const partner = this.partnerOf(active);
+    if (this.canPull(active, partner)) alerts.push('Ação: puxar o parceiro');
+    else if (!this.living.inWater && this.canPull(partner, active)) alerts.push('Pule: o parceiro te puxa');
+    this.hud.setStatus(
+      [
+        `Personagem: ${name}`,
+        `Esqueleto: cabeça ${head}, braço ${arm}${skeletonState}`,
+        `Chave: ${key}`,
+        `Parceiro: ${waiting ? 'esperando' : 'seguindo'}`,
+        ...alerts,
+      ].join('\n')
+    );
     // (setText ignora texto igual, então chamar todo frame é barato)
     if (this.touchControls?.buttons) {
       this.touchControls.setButtonLabel('wait', waiting ? 'SEGUIR' : 'ESPERAR');
@@ -573,7 +1092,8 @@ export default class PlayScene extends Phaser.Scene {
     if (this.isResetting || this.levelComplete) return;
     this.isResetting = true;
     this.lastDeathReason = reason || 'unknown';
-    if (reason === 'water') playSfx(this, 'splash');
+    this.cancelAim();
+    if (reason === 'water') playSfx(this, 'bubbles');
     if (reason === 'enemy') playSfx(this, 'hit');
     playSfx(this, reason === 'fall' ? 'fall' : 'death');
     this.physics.pause();
@@ -588,6 +1108,11 @@ export default class PlayScene extends Phaser.Scene {
     playSfx(this, 'win');
     this.hud.showLevelComplete();
   }
+}
+
+// No chão (piso fixo ou em cima de caixa, que é corpo dinâmico).
+function isOnGround(character) {
+  return character.body.blocked.down || character.body.touching.down;
 }
 
 // Largura do mundo = até a última coluna usada (+1 de folga), não a grade

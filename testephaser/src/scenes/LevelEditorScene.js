@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, EDITOR_GRID, COLORS } from '../config/constants.js';
 import { TILE_MANIFEST, OBJECT_MANIFEST } from '../config/assetManifest.js';
 import { instantiateSprite } from '../levels/LevelLoader.js';
+import { isSlopeKey } from '../levels/slopes.js';
 import { playSfx } from '../audio/sfx.js';
 import {
   buildLevelData,
@@ -14,6 +15,7 @@ import {
 import {
   ENTITY_TYPES,
   ENTITY_ORDER,
+  ENEMY_ORDER,
   CHANNELS,
   CHANNEL_COLORS,
   createEntityPreview,
@@ -277,6 +279,13 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.uiText(16, 72, 'Chão');
     TILE_MANIFEST.forEach((tile, i) => {
       this.addImageSwatch(16 + i * SWATCH_GAP, 90, tile.key);
+    });
+
+    // inimigos na mesma linha do chão (a de peças não tem mais espaço)
+    const enemiesX = 16 + TILE_MANIFEST.length * SWATCH_GAP + 40;
+    this.uiText(enemiesX, 72, 'Inimigos');
+    ENEMY_ORDER.forEach((type, i) => {
+      this.addEntitySwatch(enemiesX + i * SWATCH_GAP, 90, type);
     });
 
     this.uiText(16, 140, 'Objetos');
@@ -950,6 +959,14 @@ export default class LevelEditorScene extends Phaser.Scene {
       const y = r0 * TILE_SIZE;
       const w = (c1 - c0 + 1) * TILE_SIZE;
       const h = (r1 - r0 + 1) * TILE_SIZE;
+      if (isSlopeKey(sprite.key)) {
+        // rampa: a colisão é a superfície inclinada (sobe pra direita; ↔ pra esquerda)
+        const highX = sprite.flipX ? x : x + w;
+        const lowX = sprite.flipX ? x + w : x;
+        g.fillTriangle(lowX, y + h, highX, y + h, highX, y);
+        g.strokeTriangle(lowX, y + h, highX, y + h, highX, y);
+        continue;
+      }
       g.fillRect(x, y, w, h);
       g.strokeRect(x, y, w, h);
     }

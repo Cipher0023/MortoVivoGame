@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PHYSICS } from '../config/constants.js';
+import { PHYSICS, WATER } from '../config/constants.js';
 import { BOY_WALK_FRAME_COUNT } from '../config/assetManifest.js';
 import { playSfx } from '../audio/sfx.js';
 
@@ -37,6 +37,8 @@ export default class Living extends Phaser.GameObjects.Sprite {
     this.characterName = 'living';
     this.hasKey = false;
     this.isActive = false;
+    // na água funda (a PlayScene atualiza a cada quadro): lento e sem pulo
+    this.inWater = false;
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -66,12 +68,12 @@ export default class Living extends Phaser.GameObjects.Sprite {
   // input.x: eixo de -1 a 1 (teclado dá -1/0/1; joystick, valores
   // intermediários = andar mais devagar).
   handleMovement(input) {
-    const x = input.x;
+    const x = this.inWater ? input.x * WATER.MOVE_FACTOR : input.x;
     const isWalking = x !== 0;
     this.body.setVelocityX(PHYSICS.MOVE_SPEED * x);
     if (isWalking) this.setFlipX(x < 0);
 
-    if (input.jump && this.body.blocked.down) {
+    if (input.jump && this.body.blocked.down && !this.inWater) {
       this.body.setVelocityY(PHYSICS.JUMP_VELOCITY);
       playSfx(this.scene, 'jump');
     }

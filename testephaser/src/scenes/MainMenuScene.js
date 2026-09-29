@@ -4,6 +4,7 @@ import { createButton } from '../ui/Button.js';
 import { addFullscreenButton } from '../ui/fullscreen.js';
 import { addSoundButton } from '../ui/soundButton.js';
 import { playSfx } from '../audio/sfx.js';
+import { onPadMenu } from '../input/gamepad.js';
 import { createBoyWalkAnimation } from '../entities/Living.js';
 
 // Primeira tela do site. JOGAR leva ao tutorial de como escanear os QR codes
@@ -47,10 +48,12 @@ export default class MainMenuScene extends Phaser.Scene {
     const fullscreenButton = addFullscreenButton(this, GAME_WIDTH - 24, 24, 30);
     addSoundButton(this, GAME_WIDTH - 24 - (fullscreenButton ? fullscreenButton.width + 12 : 0), 24, 30);
 
-    this.input.keyboard.once('keydown-ENTER', () => {
+    const play = () => {
       playSfx(this, 'confirm');
       this.scene.start('Tutorial');
-    });
+    };
+    this.input.keyboard.once('keydown-ENTER', play);
+    onPadMenu(this, { onConfirm: play });
   }
 
   createScenery() {

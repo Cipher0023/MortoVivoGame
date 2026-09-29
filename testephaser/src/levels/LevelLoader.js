@@ -1,4 +1,11 @@
 import { settingsFor, pieceCollision, spriteArea } from './assetSettings.js';
+import { isSlopeKey, slopeFromArea } from './slopes.js';
+
+// espessura das paredes finas da rampa (lado alto e fundo)
+const RAMP_EDGE = 4;
+// a parede do lado alto começa um pouco abaixo do topo: quem chega de cima,
+// no nível do topo, entra na rampa pra descer sem esbarrar nela
+const RAMP_SIDE_INSET = 8;
 
 // Único lugar que sabe transformar uma peça de chão/objeto (key + célula +
 // ajustes do asset) em objetos Phaser. Usado pelo editor (só a imagem) e pela
@@ -57,11 +64,24 @@ export function disableInternalFaces(areas, { horizontal = true } = {}) {
 }
 
 // Monta chão e objetos da fase. Colisão = zona invisível do tamanho da área
-// na grade (não da imagem), só pras peças com colisão ligada.
+// na grade (não da imagem), só pras peças com colisão ligada. Rampas não
+// viram caixa: vão pra `slopes` (a PlayScene apoia quem está em cima) e
+// ganham só duas paredes finas — o lado alto (ninguém entra por ali) e o
+// fundo (ninguém atravessa pulando por baixo). Pra inimigos e caixas, que não
+// sobem rampa, a rampa inteira é um bloco (`rampBlockers`).
 export function buildLevelFromData(scene, levelData) {
   const tileSize = levelData.tileSize;
   const tileGroup = scene.physics.add.staticGroup();
+  const rampBlockers = scene.physics.add.staticGroup();
+  const slopes = [];
   const solidAreas = [];
+
+  const addZone = (group, x, y, width, height) => {
+    const zone = scene.add.zone(x + width / 2, y + height / 2, width, height);
+    scene.physics.add.existing(zone, true);
+    group.add(zone);
+    return zone;
+  };
 
   for (const sprite of levelData.tiles) {
     const settings = settingsFor(levelData.assets, sprite);
@@ -69,14 +89,30 @@ export function buildLevelFromData(scene, levelData) {
     if (!pieceCollision(sprite)) continue;
 
     const area = spriteArea(sprite, settings);
+    if (isSlopeKey(sprite.key)) {
+      const slope = slopeFromArea(area, tileSize, sprite.flipX);
+      slopes.push(slope);
+      const height = slope.yBottom - slope.yTop;
+      const highX = slope.up > 0 ? slope.x1 - RAMP_EDGE : slope.x0;
+      const side = addZone(tileGroup, highX, slope.yTop + RAMP_SIDE_INSET, RAMP_EDGE, height - RAMP_SIDE_INSET).body;
+      side.checkCollision.up = false;
+      side.checkCollision.down = false;
+      // só a face de fora do lado alto (quem vem subindo passa por cima)
+      side.checkCollision.left = slope.up < 0;
+      side.checkCollision.right = slope.up > 0;
+      const bottom = addZone(tileGroup, slope.x0, slope.yBottom - RAMP_EDGE, slope.x1 - slope.x0, RAMP_EDGE).body;
+      bottom.checkCollision.up = false;
+      bottom.checkCollision.left = false;
+      bottom.checkCollision.right = false;
+      addZone(rampBlockers, slope.x0, slope.yTop, slope.x1 - slope.x0, height);
+      continue;
+    }
     const width = (area.c1 - area.c0 + 1) * tileSize;
     const height = (area.r1 - area.r0 + 1) * tileSize;
-    const zone = scene.add.zone(area.c0 * tileSize + width / 2, area.r0 * tileSize + height / 2, width, height);
-    scene.physics.add.existing(zone, true);
-    tileGroup.add(zone);
+    const zone = addZone(tileGroup, area.c0 * tileSize, area.r0 * tileSize, width, height);
     solidAreas.push({ ...area, body: zone.body });
   }
   disableInternalFaces(solidAreas);
 
-  return { tileGroup };
+  return { tileGroup, slopes, rampBlockers };
 }

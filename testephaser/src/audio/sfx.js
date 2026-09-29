@@ -60,6 +60,24 @@ export const SFX = {
   door: { layers: [tone('sawtooth', 90, 140, 0.35, 0.08), noise('lowpass', 500, 0.3, 0.2)] },
   push: { layers: [noise('lowpass', 300, 0.14, 0.2)], cooldown: 0 },
 
+  // ataques
+  stomp: { layers: [noise('lowpass', 500, 0.12, 0.35), tone('triangle', 220, 90, 0.12, 0.12)] },
+  enemyStun: { layers: notes('triangle', [659, 587], 0.08, 0.12, 0.14) },
+  enemyRecover: { layers: notes('triangle', [659, 698], 0.08, 0.12, 0.12) },
+  enemyAlert: { layers: [tone('square', 880, 1320, 0.08, 0.08)] },
+  dive: { layers: [noise('bandpass', 2000, 0.3, 0.2, 0, 500)] },
+  pullUp: { layers: [noise('bandpass', 700, 0.25, 0.2, 0, 1400)] },
+  bubbles: { layers: notes('sine', [600, 900, 750], 0.07, 0.05, 0.08), cooldown: 0 },
+  aim: { layers: [noise('highpass', 3000, 0.08, 0.08)] },
+  throw: { layers: [noise('bandpass', 1500, 0.18, 0.2, 0, 400)] },
+  armHit: { layers: [noise('lowpass', 900, 0.08, 0.3), tone('triangle', 300, 150, 0.08, 0.1)] },
+  armLand: { layers: [noise('bandpass', 1200, 0.05, 0.18)] },
+  armPickup: { layers: [tone('sine', 500, 800, 0.08, 0.12)] },
+  headGrab: { layers: [tone('sine', 450, 750, 0.08, 0.12)] },
+  headDrop: { layers: [noise('bandpass', 900, 0.06, 0.2)] },
+  collapse: { layers: [noise('bandpass', 1500, 0.3, 0.25), tone('triangle', 400, 120, 0.3, 0.1)] },
+  reassemble: { layers: [tone('triangle', 200, 500, 0.25, 0.12)] },
+
   // morte / vitória
   splash: { layers: [noise('lowpass', 2500, 0.4, 0.35, 0, 300)] },
   hit: { layers: [tone('square', 200, 60, 0.2, 0.14), noise('lowpass', 1000, 0.12, 0.25)] },

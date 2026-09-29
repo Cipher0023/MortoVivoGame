@@ -34,6 +34,119 @@ export const PHYSICS = {
   JUMP_VELOCITY: -560,
   BLOCK_PUSH_SPEED: 150,
   CLIMB_SPEED: 160,
+  // A Esqueleto pula 1,5 bloco (96px): sobe 1 bloco com folga, 2 não.
+  // Velocidade pra altura h: √(2·g·h).
+  SKELETON_JUMP_VELOCITY: -Math.sqrt(2 * 900 * 1.5 * 64),
+};
+
+// Esqueleto: sem a cabeça fica fina (passa em grades); pisada pelo Vivo,
+// desmonta e fica imóvel por um tempo.
+export const SKELETON = {
+  WIDTH: 30,
+  HEIGHT: 50,
+  HEADLESS_WIDTH: 14,
+  HEADLESS_HEIGHT: 40,
+  // pilha de ossos quando desmontada
+  COLLAPSED_HEIGHT: 14,
+  COLLAPSE_MS: 5000,
+  HEAD_SIZE: 26,
+  // distância (px) pra pegar/pôr a cabeça
+  HEAD_REACH_X: 44,
+  HEAD_REACH_Y: 60,
+};
+
+// Ataques. Vivo: pisão (cair na cabeça do inimigo). Esqueleto: arremesso do
+// braço — a mira oscila sozinha num arco e o braço voa com a gravidade do
+// mundo (movimento uniformemente variado). Alcance máximo (a 45°) ≈
+// ARM_SPEED² / GRAVITY_Y ≈ 350px ≈ 5,5 blocos.
+export const ATTACK = {
+  // quique depois do pisão (segurando o pulo, quica com o pulo inteiro)
+  STOMP_BOUNCE: -380,
+  // pés até este tanto (px) abaixo do topo do inimigo ainda contam como "em cima"
+  STOMP_TOLERANCE: 12,
+  ARM_SPEED: 560,
+  AIM_MIN_DEG: 10,
+  AIM_MAX_DEG: 80,
+  // tempo (ms) pra mira ir de uma ponta do arco à outra
+  AIM_SWEEP_MS: 900,
+  AIM_RADIUS: 60,
+  // giro do braço no ar (graus/s)
+  ARM_SPIN: 720,
+};
+
+// Água: o Vivo não morre na hora — afunda devagar, anda mais lento e não
+// consegue pular. Morre se afundar mais que 1 bloco abaixo da borda (aí o
+// parceiro não alcança mais pra puxar) ou depois de DROWN_MS, o que vier
+// primeiro. Ao cair, mergulha rápido até meio bloco (senão, andando quase na
+// superfície, a física o deixaria "subir" na borda do outro lado) e depois
+// afunda devagar: janela de resgate numa piscina funda ≈2,5s.
+export const WATER = {
+  PLUNGE_DEPTH: 0.5, // blocos abaixo da borda
+  PLUNGE_SPEED: 200,
+  SINK_SPEED: 20,
+  MOVE_FACTOR: 0.5,
+  DROWN_MS: 5000,
+  BUBBLE_INTERVAL_MS: 700,
+};
+
+// Puxar o parceiro: quem está no chão puxa o outro pra cima SÓ se os pés
+// dele estão exatamente 1 bloco abaixo (ex.: um no bloco 1, o outro no 2).
+// Acontece apertando a ação (quem está em cima) ou sozinho, quando o de
+// baixo pula ao lado do de cima — é também como o Vivo sai da água.
+export const PULL_UP = {
+  // distância lateral (centro a centro): ~1,75 bloco — quem para na beira da
+  // água fica a ~1,5 bloco de quem caiu na primeira coluna
+  REACH_X: 112,
+  LEVEL_DIFF: 1,
+  // folga, em fração de bloco (≈21px), pra quem não está exatamente alinhado
+  // à grade (o Vivo boiando fica com os pés 1 bloco abaixo da borda)
+  LEVEL_TOLERANCE: 0.33,
+  DURATION_MS: 250,
+};
+
+// Rampas (ver levels/slopes.js), classificadas pelo ângulo: suave (até
+// EASY_MAX_DEG) sobe normal; média (ex.: 45°) sobe mais devagar; íngreme (a
+// partir de STEEP_MIN_DEG) perde velocidade conforme sobe e, sem força,
+// escorrega de volta — não dá pra pular dela.
+export const SLOPE = {
+  EASY_MAX_DEG: 35,
+  STEEP_MIN_DEG: 55,
+  MEDIUM_FACTOR: 0.5,
+  // íngreme: começa com esta fração da velocidade e chega a zero ao subir
+  // STEEP_STALL_AT da altura da rampa
+  STEEP_START_FACTOR: 0.6,
+  STEEP_STALL_AT: 0.6,
+  STEEP_MIN_FACTOR: 0.05,
+  SLIDE_SPEED: 140,
+  // quanto (px) o apoio "puxa" pra baixo quem desce andando, pra não quicar
+  STICK: 20,
+  // afundou mais que isso na superfície num quadro: não é apoio (é o lado
+  // de baixo/alto da rampa)
+  MAX_STEP: 28,
+};
+
+// Inimigos não morrem: o pisão e o braço os paralisam por STUN_MS (piscam
+// no fim, antes de voltar a andar). Paralisados, não fazem mal a ninguém.
+// Todos só enxergam/machucam o Vivo. Distâncias em blocos (64px).
+export const ENEMY = {
+  STUN_MS: 4000,
+  BLINK_MS: 1000,
+  PATROL_SPEED: 80,
+  // perseguidores: veem o Vivo até esta distância (e mais ou menos na mesma
+  // altura) e vão atrás dele, sem cair de beiradas
+  CHASE_RANGE_X: 6,
+  CHASE_RANGE_Y: 1.5,
+  TALL_CHASE_SPEED: 110,
+  SHORT_CHASE_SPEED: 160,
+  // voadores: vão e voltam na horizontal até FLY_RANGE blocos da origem
+  FLY_SPEED: 110,
+  FLY_RANGE: 4,
+  // mergulhador: mergulha quando o Vivo passa embaixo (até DIVE_RANGE_Y
+  // blocos abaixo), desce até o nível dele e sobe de volta
+  DIVE_TRIGGER_X: 0.6,
+  DIVE_RANGE_Y: 7,
+  DIVE_SPEED: 380,
+  RISE_SPEED: 120,
 };
 
 export const COLORS = {
@@ -56,6 +169,11 @@ export const COLORS = {
   BUTTON_DOWN: 0x444444,
   EXIT_BUTTON: 0x33cc66,
   PATROL_ENEMY: 0x9933cc,
+  TALL_PATROL_ENEMY: 0x6a2a9a,
+  TALL_CHASER: 0xcc3333,
+  CHASER: 0xff6644,
+  FLYER: 0x33bbaa,
+  DIVER: 0xdd9922,
   GRATE: 0x777777,
 
   EDITOR_BG: 0x1a1a2e,

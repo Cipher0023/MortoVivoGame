@@ -99,3 +99,26 @@ com o mesmo id usado em `src/config/assetManifest.js`.
 | `redo-1.mp3` | Kenney (kenney.nl) | kenney_interface-sounds/Audio/select_007.ogg |
 | `save-1.mp3` | Kenney (kenney.nl) | kenney_interface-sounds/Audio/confirmation_003.ogg |
 | `load-1.mp3` | Kenney (kenney.nl) | kenney_interface-sounds/Audio/open_002.ogg |
+| `aim-1.mp3` | Kenney (kenney.nl) | kenney_rpg-audio/Audio/drawKnife3.ogg |
+| `throw-1.mp3` | Kenney (kenney.nl) | kenney_rpg-audio/Audio/knifeSlice2.ogg |
+| `throw-2.mp3` | Kenney (kenney.nl) | kenney_rpg-audio/Audio/knifeSlice.ogg |
+| `armHit-1.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactWood_medium_000.ogg |
+| `armHit-2.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactWood_medium_001.ogg |
+| `armHit-3.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactWood_medium_002.ogg |
+| `armLand-1.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactWood_light_002.ogg |
+| `armLand-2.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactWood_light_003.ogg |
+| `armLand-3.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactWood_light_004.ogg |
+| `armPickup-1.mp3` | Kenney (kenney.nl) | kenney_rpg-audio/Audio/beltHandle1.ogg |
+| `stomp-1.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactSoft_heavy_000.ogg |
+| `stomp-2.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactSoft_heavy_001.ogg |
+| `stomp-3.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactSoft_heavy_002.ogg |
+| `enemyStun-1.mp3` | Kenney (kenney.nl) | music-jingles/Audio/Pizzicato jingles/jingles_PIZZI09.ogg |
+| `collapse-1.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactPlank_medium_003.ogg |
+| `collapse-2.mp3` | Kenney (kenney.nl) | kenney_impact-sounds/Audio/impactPlank_medium_004.ogg |
+| `reassemble-1.mp3` | Kenney (kenney.nl) | kenney_rpg-audio/Audio/creak3.ogg |
+| `bubbles-1.mp3` | rubberduck (OpenGameArt) | water/bubble_01.ogg |
+| `bubbles-2.mp3` | rubberduck (OpenGameArt) | water/bubble_02.ogg |
+| `bubbles-3.mp3` | rubberduck (OpenGameArt) | water/bubble_03.ogg |
+| `pullUp-1.mp3` | Kenney (kenney.nl) | kenney_rpg-audio/Audio/clothBelt.ogg |
+| `pullUp-2.mp3` | Kenney (kenney.nl) | kenney_rpg-audio/Audio/clothBelt2.ogg |
+| `enemyRecover-1.mp3` | Kenney (kenney.nl) | music-jingles/Audio/Pizzicato jingles/jingles_PIZZI13.ogg |

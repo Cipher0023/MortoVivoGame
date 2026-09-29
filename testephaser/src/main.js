@@ -36,7 +36,7 @@ const config = {
   },
   // Padrão do Phaser é 1 toque: sem isso, segurar o joystick e apertar um
   // botão ao mesmo tempo não funciona.
-  input: { activePointers: 3 },
+  input: { activePointers: 3, gamepad: true },
   // Overlays (Hud, TouchControls) depois da fase na lista = desenhados por cima.
   scene: [
     PreloadScene,
