@@ -17,11 +17,7 @@ export default class playerController extends ScriptNode {
 
 		this.tuning = {
 			runSpeed: 380,
-			jumpVelocity: -420,
-			// Hitbox proporcional ao tamanho nativo dos frames (202x291), na
-			// mesma razão que o protótipo antigo usava para o sprite distorcido
-			// (250x400 -> 42x70).
-			bodySize: { width: 34, height: 51 },
+			jumpVelocity: -600,
 			walk: { frameCount: 12, frameRate: 16 },
 		};
 
@@ -43,7 +39,6 @@ export default class playerController extends ScriptNode {
 		this.cursors = this.scene.input.keyboard.createCursorKeys();
 
 		this.createAnimations();
-		this.applyFixedBody();
 	}
 
 	createAnimations() {
@@ -62,15 +57,6 @@ export default class playerController extends ScriptNode {
 			frameRate: this.tuning.walk.frameRate,
 			repeat: -1,
 		});
-	}
-
-	applyFixedBody() {
-		const sprite = this.gameObject;
-		if (!sprite.body) return;
-
-		const { width, height } = this.tuning.bodySize;
-		sprite.body.setSize(width, height, false);
-		sprite.body.setOffset((sprite.width - width) / 2, sprite.height - height);
 	}
 
 	update() {

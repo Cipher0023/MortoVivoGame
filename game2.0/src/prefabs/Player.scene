@@ -21,7 +21,12 @@
             },
             "x": 300,
             "y": 502,
-            "originY": 1
+            "originY": 1,
+            "ArcadeComponent.active": true,
+            "body.width": 200,
+            "body.height": 265,
+            "body.offset.x": 2,
+            "body.offset.y": 26
         }
     ],
     "plainObjects": [],

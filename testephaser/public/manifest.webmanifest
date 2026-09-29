@@ -1,0 +1,9 @@
+{
+  "name": "Morto Vivo game",
+  "short_name": "Morto Vivo",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e"
+}

@@ -28,7 +28,7 @@ export default class mainMenu extends Phaser.Scene {
 		game_Title.setStyle({ "fontSize": "30px" });
 
 		// backgroundTeste
-		this.add.image(734, 767, "backgroundTeste");
+		this.add.image(640, 360, "backgroundTeste");
 
 		// Start
 		const start = this.add.text(580, 376, "", {});

@@ -12,11 +12,6 @@
                 "key": "chao"
             },
             {
-                "url": "assets/dino.png",
-                "key": "dino",
-                "type": "image"
-            },
-            {
                 "url": "assets/walk_01.png",
                 "type": "image",
                 "key": "walk_01"
@@ -100,6 +95,111 @@
                 "url": "assets/boy/walk_12.png",
                 "type": "image",
                 "key": "boy-walk-12"
+            },
+            {
+                "url": "assets/Objetos/arbusto.png",
+                "type": "image",
+                "key": "arbusto"
+            },
+            {
+                "url": "assets/Objetos/banco.png",
+                "type": "image",
+                "key": "banco"
+            },
+            {
+                "url": "assets/Objetos/caixa1.png",
+                "type": "image",
+                "key": "caixa1"
+            },
+            {
+                "url": "assets/Objetos/caixa2.png",
+                "type": "image",
+                "key": "caixa2"
+            },
+            {
+                "url": "assets/Objetos/cerca1.png",
+                "type": "image",
+                "key": "cerca1"
+            },
+            {
+                "url": "assets/Objetos/flor1.png",
+                "type": "image",
+                "key": "flor1"
+            },
+            {
+                "url": "assets/Objetos/flor2.png",
+                "type": "image",
+                "key": "flor2"
+            },
+            {
+                "url": "assets/Objetos/hidrante.png",
+                "type": "image",
+                "key": "hidrante"
+            },
+            {
+                "url": "assets/Objetos/pedra1.png",
+                "type": "image",
+                "key": "pedra1"
+            },
+            {
+                "url": "assets/Objetos/pedra2.png",
+                "type": "image",
+                "key": "pedra2"
+            },
+            {
+                "url": "assets/tiles/bloco chao1.png",
+                "type": "image",
+                "key": "bloco-chao1"
+            },
+            {
+                "url": "assets/tiles/bloco chao2.png",
+                "type": "image",
+                "key": "bloco-chao2"
+            },
+            {
+                "url": "assets/tiles/bloco chao3.png",
+                "type": "image",
+                "key": "bloco-chao3"
+            },
+            {
+                "url": "assets/tiles/bloco chao 3 modulos.png",
+                "type": "image",
+                "key": "bloco-chao-3-modulos"
+            },
+            {
+                "url": "assets/tiles/bloco chao borda.png",
+                "type": "image",
+                "key": "bloco-chao-borda"
+            },
+            {
+                "url": "assets/tiles/bloco terra 1.png",
+                "type": "image",
+                "key": "bloco-terra-1"
+            },
+            {
+                "url": "assets/tiles/bloco terra 2.png",
+                "type": "image",
+                "key": "bloco-terra-2"
+            },
+            {
+                "url": "assets/tiles/bloco terra 3.png",
+                "type": "image",
+                "key": "bloco-terra-3"
+            },
+            {
+                "url": "assets/tiles/bloco terra 6 modulos.png",
+                "type": "image",
+                "key": "bloco-terra-6-modulos"
+            },
+            {
+                "url": "assets/tiles/bloco terra borda.png",
+                "type": "image",
+                "key": "bloco-terra-borda"
+            },
+            {
+                "url": "assets/tiles/bloco terra borda 2.png",
+                "type": "image",
+                "key": "bloco-terra-borda-2"
             }
         ]
     },

@@ -1,4 +1,3 @@
-import Level from "./scenes/Level.js";
 import Preload from "./scenes/Preload.js";
 import mainMenu from "./scenes/mainMenu.js";
 import primeiraFase from "./scenes/primeiraFase.js"; // ✅ Corrigido o typo
@@ -27,7 +26,6 @@ window.addEventListener("load", function () {
   });
 
   game.scene.add("mainMenu", mainMenu);
-  game.scene.add("Level", Level);
   game.scene.add("Preload", Preload);
   game.scene.add("primeiraFase", primeiraFase);
   game.scene.add("Boot", Boot, true);

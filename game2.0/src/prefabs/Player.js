@@ -3,9 +3,8 @@
 
 /* START OF COMPILED CODE */
 
-import PlayerController from "../Scripts/player/playerController.js";
-
 /* START-USER-IMPORTS */
+import PlayerController from "../Scripts/player/playerController.js";
 /* END-USER-IMPORTS */
 
 export default class Player extends Phaser.GameObjects.Sprite {
@@ -14,6 +13,9 @@ export default class Player extends Phaser.GameObjects.Sprite {
 		super(scene, x ?? 300, y ?? 502, texture || "boy-walk-01", frame);
 
 		this.setOrigin(0.5, 1);
+		scene.physics.add.existing(this, false);
+		this.body.setOffset(2, 26);
+		this.body.setSize(200, 265, false);
 
 		/* START-USER-CTR-CODE */
 

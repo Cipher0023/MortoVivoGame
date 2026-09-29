@@ -1,0 +1,22 @@
+{
+  "name": "morto-vivo-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:celular": "vite --mode celular",
+    "build": "vite build",
+    "preview": "vite preview",
+    "qrcodes": "node scripts/generate-qrcodes.mjs"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^1.2.0",
+    "qrcode": "^1.5.4",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "jsqr": "^1.4.0",
+    "phaser": "^3.90.0"
+  }
+}
