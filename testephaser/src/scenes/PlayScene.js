@@ -339,6 +339,8 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------
   // Personagens
   // ---------------------------------------------------------------------
+  // Fase pode ter só um dos dois: o outro existe (o código conta com os
+  // dois), mas fica fora do jogo — ver removeFromLevel.
   createCharacters() {
     const fallback = { x: this.cellSize * 1.5, bottom: this.cellSize * 2 };
     const livingSpawn = this.spawns.living ?? fallback;
@@ -346,8 +348,22 @@ export default class PlayScene extends Phaser.Scene {
     // y = centro do corpo: pés na base da célula (corpo do Vivo 70px, Esqueleto 50px)
     this.living = new Living(this, livingSpawn.x, livingSpawn.bottom - 36);
     this.skeleton = new Skeleton(this, skeletonSpawn.x, skeletonSpawn.bottom - 26);
+    // (fase sem nenhum dos dois: arquivo antigo/incompleto — joga com os dois)
+    if (this.spawns.living || this.spawns.skeleton) {
+      if (!this.spawns.living) this.removeFromLevel(this.living);
+      if (!this.spawns.skeleton) this.removeFromLevel(this.skeleton);
+    }
     this.characterManager = new CharacterManager(this, this.living, this.skeleton);
     this.followSystem = new FollowSystem(this);
+  }
+
+  // Personagem que não está na fase: sem corpo (nenhuma colisão, overlap ou
+  // gravidade), invisível e longe de tudo (inimigos não o enxergam).
+  removeFromLevel(character) {
+    character.absent = true;
+    character.body.reset(-10000, -10000);
+    character.body.enable = false;
+    character.setVisible(false);
   }
 
   // Tem chão logo à frente nessa direção? Usado pelo parceiro (não anda pra
@@ -363,6 +379,89 @@ export default class PlayScene extends Phaser.Scene {
       const y = surfaceY(slope, probeX);
       return y >= body.bottom - SLOPE.MAX_STEP * 2 && y <= body.bottom + 24;
     });
+  }
+
+  // Onde se pousa descendo pela coluna x, entre as alturas top e bottom:
+  //   null              nada (buraco, ou chão mais fundo que bottom)
+  //   { blocked: true } parede passando por cima de top (não dá pra chegar)
+  //   { y, safe }       superfície mais alta; safe = sem água por cima dela
+  //                     e (pro Vivo) sem inimigo acordado ali perto
+  // `who` é quem vai pousar (só o Vivo morre pra inimigo).
+  landingAt(x, top, bottom, who) {
+    let y = Infinity;
+    const bodies = this.physics.overlapRect(x - 4, top, 8, bottom - top, true, true);
+    for (const found of bodies) {
+      if (!found.enable || !this.floorObjects.has(found.gameObject)) continue;
+      if (found.top < top) return { blocked: true };
+      y = Math.min(y, found.top);
+    }
+    for (const slope of this.slopes) {
+      if (x < slope.x0 || x > slope.x1) continue;
+      const sy = surfaceY(slope, x);
+      if (sy >= top && sy <= bottom) y = Math.min(y, sy);
+    }
+    if (y === Infinity) return null;
+
+    const S = this.cellSize;
+    const water = this.waters.some((w) => x > w.body.left && x < w.body.right && w.body.top < y && w.body.bottom > top);
+    const enemy =
+      who === this.living &&
+      this.enemies.some(
+        (e) => !e.stunned && Math.abs(e.x - x) < S * 1.5 && e.body.bottom > y - S * 2 && e.body.top < y + 4
+      );
+    return { y, safe: !water && !enemy };
+  }
+
+  jumpSpeedOf(character) {
+    return Math.abs(character.jumpVelocity ?? PHYSICS.JUMP_VELOCITY);
+  }
+
+  // altura do pulo: v²/2g
+  jumpHeightOf(character) {
+    const v = this.jumpSpeedOf(character);
+    return (v * v) / (2 * PHYSICS.GRAVITY_Y);
+  }
+
+  // Inimigo acordado logo à frente do Vivo (a Esqueleto não se machuca)?
+  dangerAhead(who, dir) {
+    if (who !== this.living) return false;
+    const S = this.cellSize;
+    const aheadX = who.x + dir * S;
+    return this.enemies.some(
+      (e) =>
+        !e.stunned &&
+        Math.abs(e.x - aheadX) < S * 0.9 &&
+        e.body.bottom > who.body.top - 4 &&
+        e.body.top < who.body.bottom + 4
+    );
+  }
+
+  // Seguidor numa beirada, indo pra `dir`: 'drop' (descer — o líder está
+  // mais embaixo e o pouso é seguro), 'jump' (pular o vão — tem pouso
+  // seguro dentro do alcance do pulo e o líder já passou dele) ou null
+  // (fica). Nunca pula em água, buraco ou perto de inimigo.
+  planEdge(follower, leader, dir) {
+    const S = this.cellSize;
+    const body = follower.body;
+    const edgeX = body.center.x + dir * body.halfWidth;
+
+    if (leader.body.bottom > body.bottom + S / 2) {
+      const drop = this.landingAt(edgeX + dir * 20, body.bottom, this.worldHeight, follower);
+      if (drop?.safe) return 'drop';
+    }
+
+    // alcance do pulo, com folga (no ar por 2v/g)
+    const height = this.jumpHeightOf(follower);
+    const reach = PHYSICS.MOVE_SPEED * ((2 * this.jumpSpeedOf(follower)) / PHYSICS.GRAVITY_Y) * 0.8;
+    for (let d = 16; d <= reach; d += 16) {
+      const x = edgeX + dir * d;
+      const land = this.landingAt(x, body.bottom - height * 0.6, body.bottom + S * 2, follower);
+      if (land?.blocked) return null;
+      if (!land?.safe) continue;
+      // só pula se o líder já está do outro lado
+      return Math.abs(leader.x - body.center.x) >= Math.abs(x - body.center.x) - S / 2 ? 'jump' : null;
+    }
+    return null;
   }
 
   // ---------------------------------------------------------------------
@@ -455,6 +554,9 @@ export default class PlayScene extends Phaser.Scene {
     // Vivo caindo em cima da Esqueleto: ela desmonta
     this.physics.add.overlap(this.living, this.skeleton, () => this.onLivingTouchesSkeleton());
 
+    // chave: cai e para no chão (rampa: ver updateSlopes); passa pelos
+    // personagens, que só a pegam
+    this.physics.add.collider(this.keyItems, [...solids, ...this.grates, ...this.bridges, ...this.boxes]);
     // chave: qualquer um pega (uma por vez) e fica com quem pegou — é esse
     // personagem que precisa levá-la até a porta
     this.physics.add.overlap(both, this.keyItems, (character, key) => {
@@ -528,9 +630,7 @@ export default class PlayScene extends Phaser.Scene {
     const active = this.characterManager.getActive();
     // ataque: o Vivo chuta a bola; a Esqueleto mira o braço (parada — ←/→
     // só viram o lado)
-    const kickPressed = attackPressed && active === this.living;
-    if (kickPressed && !this.tryKick()) playSfx(this, 'nope');
-    const aiming = this.updateArmAim(active, attackHeld, attackPressed && !kickPressed, moveX, time);
+    const aiming = this.updateAim(active, attackHeld, attackPressed, moveX, time);
     // pular ao lado do parceiro 1 bloco acima: ele puxa (no lugar do pulo)
     const pulled = jumpPressed && !aiming && this.tryAutoPull(active);
     active.handleMovement({ x: aiming ? 0 : moveX, jump: aiming || pulled ? false : jumpDown });
@@ -541,15 +641,19 @@ export default class PlayScene extends Phaser.Scene {
     // (os dois lados do || sempre rodam, pra consumir o aperto do touch)
     const switchPressed = Phaser.Input.Keyboard.JustDown(k.switchKey);
     if (this.consumeTouchPress('switch') || switchPressed || pad.pressed(PAD.Y)) {
-      this.characterManager.switchCharacter();
-      playSfx(this, 'switch');
+      // (sem parceiro na fase, não troca)
+      playSfx(this, this.characterManager.switchCharacter() ? 'switch' : 'nope');
     }
 
     // parceiro: segue por padrão; F / botão ESPERAR manda esperar e libera
     const waitPressed = Phaser.Input.Keyboard.JustDown(k.wait);
     if (this.consumeTouchPress('wait') || waitPressed || pad.pressed(PAD.LB)) {
-      this.followSystem.toggleWait(this.characterManager.getInactive());
-      playSfx(this, this.followSystem.waiting ? 'wait' : 'follow');
+      if (this.characterManager.hasPartner()) {
+        this.followSystem.toggleWait(this.characterManager.getInactive());
+        playSfx(this, this.followSystem.waiting ? 'wait' : 'follow');
+      } else {
+        playSfx(this, 'nope');
+      }
     }
     this.followSystem.update(this.characterManager.getActive(), this.characterManager.getInactive());
     this.applySlopeSpeed();
@@ -571,6 +675,10 @@ export default class PlayScene extends Phaser.Scene {
     this.updateThrownArm();
     this.updateHead();
     this.updateBalls(delta);
+    // chave caiu num buraco: volta pro lugar (senão a fase travaria)
+    for (const key of this.keyItems) {
+      if (key.body.enable && key.body.top > this.worldHeight + FALL_DEATH_MARGIN) key.respawn();
+    }
     this.updateHoldButtons();
     this.updatePendingCloses();
 
@@ -593,7 +701,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------
   updateSlopes() {
     if (this.slopes.length === 0) return;
-    const objects = [this.living, this.skeleton, this.head?.object, this.arm?.object, ...this.balls];
+    const objects = [this.living, this.skeleton, this.head?.object, this.arm?.object, ...this.balls, ...this.keyItems];
     for (const object of objects) {
       if (!object?.body?.enable || object.beingPulled || object.climbing) continue;
       object.onSlope = this.snapToSlope(object);
@@ -663,39 +771,44 @@ export default class PlayScene extends Phaser.Scene {
     body.setVelocityY(jumpHeld ? PHYSICS.JUMP_VELOCITY : ATTACK.STOMP_BOUNCE);
   }
 
-  // Arremesso do braço (Esqueleto): segurar o ataque mostra a mira, que
-  // oscila sozinha no arco; soltar arremessa no ângulo do momento. Só no
-  // chão e com o braço no corpo. Retorna true enquanto está mirando.
-  updateArmAim(active, held, pressed, moveX, time) {
-    const skeleton = this.skeleton;
-    const canAim =
-      active === skeleton && skeleton.hasArm && !skeleton.collapsed && isOnGround(skeleton) && !skeleton.climbing;
-
+  // Mira (segurar o ataque): a seta oscila sozinha no arco; soltar lança no
+  // ângulo do momento. Esqueleto: arremessa o braço (no chão, com o braço no
+  // corpo). Vivo: chuta a bola que está no pé dele (no chão). Quem mira fica
+  // parado (←/→ só viram o lado). Retorna true enquanto está mirando.
+  updateAim(active, held, pressed, moveX, time) {
     if (!this.aim) {
       if (!pressed) return false;
-      if (!canAim) {
-        // Esqueleto sem o braço, no ar ou na escada não arremessa (o Vivo
-        // nem chega aqui: o ataque dele é o chute, ver tryKick)
+      const ball = active === this.living ? this.ballInReach() : null;
+      const canStart = active === this.living ? Boolean(ball) && this.canKick(ball) : this.canAimArm();
+      if (!canStart) {
+        // Vivo sem bola no pé; Esqueleto sem o braço, no ar ou na escada
         playSfx(this, 'nope');
         return false;
       }
-      this.aim = { startTime: time, angle: ATTACK.AIM_MIN_DEG };
+      this.aim = { character: active, ball, startTime: time, angle: ATTACK.AIM_MIN_DEG };
+      // começou o chute: a bola para no pé dele
+      ball?.body.setVelocity(0, 0);
       playSfx(this, 'aim');
     }
 
-    if (!canAim) {
+    const aim = this.aim;
+    const stillCan = aim.character === active && (aim.ball ? this.canKick(aim.ball) : this.canAimArm());
+    if (!stillCan) {
       this.cancelAim();
       return false;
     }
-    if (moveX !== 0) skeleton.facing = Math.sign(moveX);
+    if (moveX !== 0) this.setFacing(active, Math.sign(moveX));
+    // mirando o chute, a bola fica parada (só a gravidade age)
+    if (aim.ball) aim.ball.body.setVelocityX(0);
 
     // vai e volta entre as pontas do arco
-    const sweep = ((time - this.aim.startTime) / ATTACK.AIM_SWEEP_MS) % 2;
+    const sweep = ((time - aim.startTime) / ATTACK.AIM_SWEEP_MS) % 2;
     const t = sweep < 1 ? sweep : 2 - sweep;
-    this.aim.angle = ATTACK.AIM_MIN_DEG + (ATTACK.AIM_MAX_DEG - ATTACK.AIM_MIN_DEG) * t;
+    aim.angle = ATTACK.AIM_MIN_DEG + (ATTACK.AIM_MAX_DEG - ATTACK.AIM_MIN_DEG) * t;
 
     if (!held) {
-      this.throwArm(this.aim.angle);
+      if (aim.ball) aim.ball.kick(this.facingOf(this.living), aim.angle);
+      else this.throwArm(aim.angle);
       this.cancelAim();
       return false;
     }
@@ -703,9 +816,37 @@ export default class PlayScene extends Phaser.Scene {
     return true;
   }
 
+  canAimArm() {
+    const skeleton = this.skeleton;
+    return skeleton.hasArm && !skeleton.collapsed && isOnGround(skeleton) && !skeleton.climbing;
+  }
+
+  // O Vivo alcança essa bola pra chutar (de qualquer lado: mirando, ele pode
+  // virar pro lado que quiser)?
+  canKick(ball) {
+    const living = this.living;
+    return (
+      isOnGround(living) &&
+      !living.climbing &&
+      Math.abs(ball.x - living.x) < BALL.KICK_REACH_X &&
+      Math.abs(ball.body.bottom - living.body.bottom) < BALL.KICK_REACH_Y
+    );
+  }
+
   cancelAim() {
     this.aim = null;
     this.aimGfx.clear();
+  }
+
+  // lado pra onde o personagem está virado (1 = direita)
+  facingOf(character) {
+    if (character === this.living) return this.living.flipX ? -1 : 1;
+    return character.facing;
+  }
+
+  setFacing(character, dir) {
+    if (character === this.living) this.living.setFlipX(dir < 0);
+    else character.facing = dir;
   }
 
   // ombro: de onde a mira sai e o braço é lançado
@@ -713,10 +854,12 @@ export default class PlayScene extends Phaser.Scene {
     return { x: this.skeleton.x + this.skeleton.facing * 8, y: this.skeleton.y - 12 };
   }
 
-  // Trilho do arco (fraco) + seta no ângulo atual.
+  // Trilho do arco (fraco) + seta no ângulo atual, saindo do ombro da
+  // Esqueleto ou do centro da bola.
   drawAim() {
-    const { x, y } = this.shoulder();
-    const facing = this.skeleton.facing;
+    const aim = this.aim;
+    const { x, y } = aim.ball ? { x: aim.ball.x, y: aim.ball.y } : this.shoulder();
+    const facing = this.facingOf(aim.character);
     const R = ATTACK.AIM_RADIUS;
     const point = (deg, radius) => {
       const rad = Phaser.Math.DegToRad(deg);
@@ -728,7 +871,7 @@ export default class PlayScene extends Phaser.Scene {
     for (let deg = ATTACK.AIM_MIN_DEG; deg <= ATTACK.AIM_MAX_DEG; deg += 5) track.push(point(deg, R));
     g.lineStyle(3, 0xffffff, 0.3).strokePoints(track);
 
-    const tip = point(this.aim.angle, R);
+    const tip = point(aim.angle, R);
     g.lineStyle(3, 0xffe066, 1).lineBetween(x, y, tip.x, tip.y);
     g.fillStyle(0xffe066, 1).fillCircle(tip.x, tip.y, 6);
   }
@@ -779,10 +922,11 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------
   // Bola e botões
   // ---------------------------------------------------------------------
-  // Bola no pé do Vivo (na frente dele, ou quase embaixo)?
+  // Bola no pé do Vivo (na frente dele, ou quase embaixo)? É a que ele
+  // começa a mirar pra chutar (ver updateAim).
   ballInReach() {
     const living = this.living;
-    const facing = living.flipX ? -1 : 1;
+    const facing = this.facingOf(living);
     return (
       this.balls.find((ball) => {
         const dx = ball.x - living.x;
@@ -793,14 +937,6 @@ export default class PlayScene extends Phaser.Scene {
         );
       }) ?? null
     );
-  }
-
-  // Chuta pra frente. Retorna false se não tinha bola no pé.
-  tryKick() {
-    const ball = this.ballInReach();
-    if (!ball) return false;
-    ball.kick(this.living.flipX ? -1 : 1);
-    return true;
   }
 
   updateBalls(delta) {
@@ -1247,15 +1383,16 @@ export default class PlayScene extends Phaser.Scene {
       alerts.push(`O Vivo está se afogando! ${left}s (${rescue})`);
     }
     const partner = this.partnerOf(active);
-    if (active === this.living && this.ballInReach()) alerts.push('Ataque: chutar a bola');
+    if (active === this.living && this.ballInReach()) alerts.push('Segure o ataque: mirar o chute');
     if (this.canPull(active, partner)) alerts.push('Ação: puxar o parceiro');
     else if (!this.living.inWater && this.canPull(partner, active)) alerts.push('Pule: o parceiro te puxa');
+    const hasPartner = this.characterManager.hasPartner();
     this.hud.setStatus(
       [
         `Personagem: ${name}`,
-        `Esqueleto: cabeça ${head}, braço ${arm}${skeletonState}`,
+        ...(this.skeleton.absent ? [] : [`Esqueleto: cabeça ${head}, braço ${arm}${skeletonState}`]),
         `Chave: ${key}`,
-        `Parceiro: ${waiting ? 'esperando' : 'seguindo'}`,
+        ...(hasPartner ? [`Parceiro: ${waiting ? 'esperando' : 'seguindo'}`] : []),
         ...alerts,
       ].join('\n')
     );
@@ -1268,7 +1405,8 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   // Celular: só aparecem os botões que o personagem ativo consegue usar
-  // agora (TROCAR, ESPERAR e AÇÃO ficam sempre — ação serve pros dois).
+  // agora (AÇÃO fica sempre — serve pros dois; TROCAR e ESPERAR, sempre que
+  // a fase tem os dois personagens).
   //   PULAR   some com a Esqueleto desmontada (ela não se mexe)
   //   CHUTAR  Vivo, só em fase com bola
   //   BRAÇO   Esqueleto montada e com o braço no corpo
@@ -1282,6 +1420,10 @@ export default class PlayScene extends Phaser.Scene {
     touch.setButtonVisible('jump', !(isSkeleton && skeleton.collapsed));
     touch.setButtonVisible('attack', isSkeleton ? skeletonFree && skeleton.hasArm : this.balls.length > 0);
     touch.setButtonVisible('head', skeletonFree && this.head?.object.carrier !== this.living);
+    // fase com um personagem só: não tem com quem trocar nem quem esperar
+    const hasPartner = this.characterManager.hasPartner();
+    touch.setButtonVisible('switch', hasPartner);
+    touch.setButtonVisible('wait', hasPartner);
   }
 
   triggerDeath(reason) {

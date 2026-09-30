@@ -8,10 +8,10 @@ import { onPadMenu } from '../input/gamepad.js';
 import { playSfx } from '../audio/sfx.js';
 
 const KEYBOARD_HINT =
-  'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar/puxar | C: cabeça | R (segurar/soltar): braço | W/S: escada | M: som | Esc: sair';
+  'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar/puxar | C: cabeça | R (segurar/soltar): braço/chute | W/S: escada | M: som | Esc: sair';
 // botões no layout Xbox (no PlayStation: A = ✕, B = ○, X = □, Y = △)
 const GAMEPAD_HINT =
-  'Controle — analógico/direcional: mover e escada | A: pular | X: ação | B ou RT (segurar/soltar): braço | Y: trocar | LB: esperar/seguir | RB: cabeça | Select: sair';
+  'Controle — analógico/direcional: mover e escada | A: pular | X: ação | B ou RT (segurar/soltar): braço/chute | Y: trocar | LB: esperar/seguir | RB: cabeça | Select: sair';
 
 // HUD fixo de tela, em cena própria por cima da fase: assim o zoom/scroll da
 // câmera do jogo não desloca nem amplia os textos (setScrollFactor(0) não

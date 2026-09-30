@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { BALL } from '../config/constants.js';
 import { playSfx } from '../audio/sfx.js';
 
-// Bola que o Vivo chuta (ver PlayScene.tryKick): quica, rola com atrito no
+// Bola que o Vivo chuta mirando (ver PlayScene.updateAim): quica, rola com atrito no
 // chão e gira conforme anda. Colisões, rampas e botões ficam na PlayScene.
 // Caindo num buraco, volta pro lugar onde começou (senão a fase travaria).
 export default class Ball extends Phaser.Physics.Arcade.Image {
@@ -20,8 +20,10 @@ export default class Ball extends Phaser.Physics.Arcade.Image {
     this.lastVelocityY = 0;
   }
 
-  kick(dir) {
-    this.body.setVelocity(dir * BALL.KICK_SPEED_X, BALL.KICK_SPEED_Y);
+  // dir: 1 = direita, -1 = esquerda; angleDeg: acima da horizontal
+  kick(dir, angleDeg) {
+    const rad = Phaser.Math.DegToRad(angleDeg);
+    this.body.setVelocity(dir * BALL.KICK_SPEED * Math.cos(rad), -BALL.KICK_SPEED * Math.sin(rad));
     playSfx(this.scene, 'kick');
   }
 

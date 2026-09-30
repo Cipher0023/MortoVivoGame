@@ -6,6 +6,21 @@ export const GAME_HEIGHT = 1080;
 // Câmera da fase, calibrada por Mario (NES: Super Mario ≈ 14% da altura da
 // tela) e Sonic (Mega Drive: ≈ 18%). Com zoom 2 a visão é 960x540 de mundo e
 // o Vivo (84px) ocupa ≈ 16% da altura.
+// Fundos em paralaxe (camadas "Fundo perto" e "Fundo longe" do editor): no
+// jogo rolam mais devagar que a fase — factor = fração da rolagem da câmera
+// (1 = junto com a fase). Só na horizontal: na vertical acompanham a fase,
+// pra o desenho ficar na altura em que foi pintado. depth: atrás da fase.
+// Na posição inicial da câmera tudo aparece exatamente como no editor; mais
+// pra frente o fundo "fica pra trás", então ele não precisa ser tão largo
+// quanto a fase.
+// scale: tamanho da célula da grade do fundo em relação à da fase (quanto
+// mais longe, menor tudo fica); raise: quantos px a grade do fundo sobe em
+// relação à fase (ver levels/layerGrid.js).
+export const BACKGROUND_LAYERS = {
+  near: { label: 'Fundo perto', factor: 0.6, depth: -10, scale: 0.75, raise: 8 },
+  far: { label: 'Fundo longe', factor: 0.3, depth: -20, scale: 0.5, raise: 16 },
+};
+
 export const CAMERA = {
   ZOOM: 2,
   // suavização do follow (1 = gruda no personagem). Vertical mais lenta pra
@@ -74,16 +89,17 @@ export const ATTACK = {
   ARM_SPIN: 720,
 };
 
-// Bola: o Vivo chuta com o botão de ataque (R / B / CHUTAR) quando ela está
-// no pé dele. Quica, rola e desce rampa; aciona o botão de parede e pesa no
+// Bola: com ela no pé, o Vivo segura o ataque (R / B / CHUTAR) pra mirar —
+// a mesma mira oscilante do braço da Esqueleto (ATTACK.AIM_*) — e solta pra
+// chutar no ângulo do momento. Quica, rola e desce rampa; aciona o botão de parede e pesa no
 // botão de segurar. Caiu num buraco: volta pro lugar onde começou.
 export const BALL = {
   RADIUS: 16,
   // alcance do chute (centro a centro na horizontal; pés a pés na vertical)
   KICK_REACH_X: 60,
   KICK_REACH_Y: 40,
-  KICK_SPEED_X: 520,
-  KICK_SPEED_Y: -380,
+  // força do chute (px/s, na direção da mira)
+  KICK_SPEED: 640,
   BOUNCE: 0.55,
   // no chão: fração da velocidade que sobra a cada segundo (atrito)
   GROUND_KEEP_PER_S: 0.35,

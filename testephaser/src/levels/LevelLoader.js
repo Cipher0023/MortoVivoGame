@@ -1,5 +1,7 @@
 import { settingsFor, pieceCollision, piecePassThrough, spriteArea } from './assetSettings.js';
 import { isSlopeKey, slopeFromArea } from './slopes.js';
+import { BACKGROUND_LAYERS } from '../config/constants.js';
+import { layerGrid } from './layerGrid.js';
 
 // espessura das paredes finas da rampa (lado alto e fundo)
 const RAMP_EDGE = 4;
@@ -14,11 +16,13 @@ const RAMP_SIDE_INSET = 8;
 // Imagem da peça: cabe inteira na área (cols x rows tiles) sem distorcer —
 // ou esticada pra preencher, se o asset pedir —, apoiada na base e
 // centralizada; depois o tamanho em %, o deslocamento fino e o espelho.
-export function instantiateSprite(scene, sprite, settings, tileSize) {
+// originY: onde começa a grade (fundos em paralaxe têm a grade deslocada —
+// ver layerGrid).
+export function instantiateSprite(scene, sprite, settings, tileSize, originY = 0) {
   const areaWidth = settings.cols * tileSize;
   const areaHeight = settings.rows * tileSize;
   const left = sprite.col * tileSize;
-  const bottom = (sprite.row + 1) * tileSize;
+  const bottom = originY + (sprite.row + 1) * tileSize;
   const factor = settings.scale / 100;
 
   const image = scene.add.image(left + areaWidth / 2 + settings.offsetX, bottom + settings.offsetY, sprite.key);
@@ -87,6 +91,19 @@ export function buildLevelFromData(scene, levelData) {
     group.add(zone);
     return zone;
   };
+
+  // fundos em paralaxe: só desenho, rolando mais devagar (ver BACKGROUND_LAYERS),
+  // com os ajustes de desenho da própria camada
+  for (const [layer, { factor, depth }] of Object.entries(BACKGROUND_LAYERS)) {
+    const assets = levelData.backgroundAssets?.[layer] ?? {};
+    // grade menor e um pouco mais alta que a da fase (ver layerGrid)
+    const grid = layerGrid(layer, tileSize, levelData.grid.cols, levelData.grid.rows);
+    for (const sprite of levelData.backgrounds?.[layer] ?? []) {
+      instantiateSprite(scene, sprite, settingsFor(assets, sprite), grid.cell, grid.originY)
+        .setScrollFactor(factor, 1)
+        .setDepth(depth);
+    }
+  }
 
   for (const sprite of levelData.tiles) {
     const settings = settingsFor(levelData.assets, sprite);
