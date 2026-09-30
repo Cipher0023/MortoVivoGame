@@ -25,7 +25,8 @@ const JOYSTICK_ZONE = { maxX: GAME_WIDTH * 0.45, minY: 160 };
 const BUTTONS = [
   { id: 'jump', label: 'PULAR', x: GAME_WIDTH - 200, y: GAME_HEIGHT - 300, radius: 115, color: 0x33aa66 },
   { id: 'action', label: 'AÇÃO', x: GAME_WIDTH - 440, y: GAME_HEIGHT - 170, radius: 105, color: 0xcc8833 },
-  // segurar mira, soltar arremessa (braço da Esqueleto)
+  // Esqueleto: segurar mira, soltar arremessa o braço; Vivo: chuta a bola
+  // (a fase troca o rótulo BRAÇO/CHUTAR com setButtonLabel)
   { id: 'attack', label: 'BRAÇO', x: GAME_WIDTH - 440, y: GAME_HEIGHT - 430, radius: 95, color: 0xaa3355 },
   // Esqueleto tira/põe a cabeça (acima do PULAR)
   { id: 'head', label: 'CABEÇA', x: GAME_WIDTH - 200, y: GAME_HEIGHT - 540, radius: 75, color: 0x777766 },
@@ -142,16 +143,28 @@ export default class TouchControlsScene extends Phaser.Scene {
         color: '#ffffff',
       })
       .setOrigin(0.5);
-    return { def, circle, text };
+    return { def, circle, text, visible: true };
   }
 
   setButtonLabel(id, label) {
     this.buttons.find(({ def }) => def.id === id)?.text.setText(label);
   }
 
+  // Botão escondido: some da tela e não responde ao toque (a fase esconde o
+  // que o personagem ativo não consegue fazer agora).
+  setButtonVisible(id, visible) {
+    const button = this.buttons.find(({ def }) => def.id === id);
+    if (!button || button.visible === visible) return;
+    button.visible = visible;
+    button.circle.setVisible(visible);
+    button.text.setVisible(visible);
+    if (!visible) this.pressed[id] = false;
+  }
+
   buttonAt(pointer) {
     return this.buttons.find(
-      ({ def }) => Phaser.Math.Distance.Between(pointer.x, pointer.y, def.x, def.y) <= def.radius * HIT_SLOP
+      ({ def, visible }) =>
+        visible && Phaser.Math.Distance.Between(pointer.x, pointer.y, def.x, def.y) <= def.radius * HIT_SLOP
     );
   }
 

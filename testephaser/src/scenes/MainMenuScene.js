@@ -6,9 +6,12 @@ import { addSoundButton } from '../ui/soundButton.js';
 import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
 import { createBoyWalkAnimation } from '../entities/Living.js';
+import { setLandscapeRequired } from '../ui/orientation.js';
 
 // Primeira tela do site. JOGAR leva ao tutorial de como escanear os QR codes
 // do livro (TutorialScene), que por sua vez abre a câmera (ScanScene).
+// O menu funciona com o aparelho em pé ou deitado; o aviso de girar pra
+// horizontal só aparece depois dele (ver ui/orientation.js).
 
 const GROUND_TOP = GAME_HEIGHT - 230;
 
@@ -18,6 +21,8 @@ export default class MainMenuScene extends Phaser.Scene {
   }
 
   create() {
+    setLandscapeRequired(false);
+    this.events.once('shutdown', () => setLandscapeRequired(true));
     this.createScenery();
 
     this.add

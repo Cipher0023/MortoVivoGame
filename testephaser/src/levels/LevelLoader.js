@@ -1,4 +1,4 @@
-import { settingsFor, pieceCollision, spriteArea } from './assetSettings.js';
+import { settingsFor, pieceCollision, piecePassThrough, spriteArea } from './assetSettings.js';
 import { isSlopeKey, slopeFromArea } from './slopes.js';
 
 // espessura das paredes finas da rampa (lado alto e fundo)
@@ -69,12 +69,17 @@ export function disableInternalFaces(areas, { horizontal = true } = {}) {
 // ganham só duas paredes finas — o lado alto (ninguém entra por ali) e o
 // fundo (ninguém atravessa pulando por baixo). Pra inimigos e caixas, que não
 // sobem rampa, a rampa inteira é um bloco (`rampBlockers`).
+// Chão "atravessar por baixo" (passThrough): só a face de cima segura — pula
+// por baixo e pelos lados passa, e quem cai por cima pousa. Na rampa assim,
+// nem as paredes finas existem: só a superfície (o apoio da PlayScene já
+// ignora quem está subindo ou vem de muito abaixo dela).
 export function buildLevelFromData(scene, levelData) {
   const tileSize = levelData.tileSize;
   const tileGroup = scene.physics.add.staticGroup();
   const rampBlockers = scene.physics.add.staticGroup();
   const slopes = [];
   const solidAreas = [];
+  const passThroughAreas = [];
 
   const addZone = (group, x, y, width, height) => {
     const zone = scene.add.zone(x + width / 2, y + height / 2, width, height);
@@ -93,6 +98,8 @@ export function buildLevelFromData(scene, levelData) {
       const slope = slopeFromArea(area, tileSize, sprite.flipX);
       slopes.push(slope);
       const height = slope.yBottom - slope.yTop;
+      addZone(rampBlockers, slope.x0, slope.yTop, slope.x1 - slope.x0, height);
+      if (piecePassThrough(sprite)) continue;
       const highX = slope.up > 0 ? slope.x1 - RAMP_EDGE : slope.x0;
       const side = addZone(tileGroup, highX, slope.yTop + RAMP_SIDE_INSET, RAMP_EDGE, height - RAMP_SIDE_INSET).body;
       side.checkCollision.up = false;
@@ -104,15 +111,22 @@ export function buildLevelFromData(scene, levelData) {
       bottom.checkCollision.up = false;
       bottom.checkCollision.left = false;
       bottom.checkCollision.right = false;
-      addZone(rampBlockers, slope.x0, slope.yTop, slope.x1 - slope.x0, height);
       continue;
     }
     const width = (area.c1 - area.c0 + 1) * tileSize;
     const height = (area.r1 - area.r0 + 1) * tileSize;
     const zone = addZone(tileGroup, area.c0 * tileSize, area.r0 * tileSize, width, height);
-    solidAreas.push({ ...area, body: zone.body });
+    (piecePassThrough(sprite) ? passThroughAreas : solidAreas).push({ ...area, body: zone.body });
   }
+  // emendas calculadas separadas: um bloco sólido encostado num de
+  // atravessar não perde a própria face
   disableInternalFaces(solidAreas);
+  disableInternalFaces(passThroughAreas);
+  for (const { body } of passThroughAreas) {
+    body.checkCollision.down = false;
+    body.checkCollision.left = false;
+    body.checkCollision.right = false;
+  }
 
   return { tileGroup, slopes, rampBlockers };
 }

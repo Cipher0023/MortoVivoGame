@@ -31,6 +31,8 @@ import {
   parseVariantId,
   variantLabel,
   pieceCollision,
+  piecePassThrough,
+  isGroundKey,
   spriteArea,
   MAX_ASSET_TILES,
   MAX_ASSET_OFFSET,
@@ -134,10 +136,12 @@ export default class LevelEditorScene extends Phaser.Scene {
       this.scrollToContentEnd();
     });
     this.input.keyboard.on('keydown-P', () => this.startTest());
-    // seleção: H/V espelham, C liga/desliga colisão, Del apaga, setas movem
-    this.input.keyboard.on('keydown-H', () => this.flipSelection('x'));
-    this.input.keyboard.on('keydown-V', () => this.flipSelection('y'));
+    // seleção: H/V espelham, C liga/desliga colisão, B atravessar por baixo,
+    // Del apaga, setas movem. Com chão/objeto no pincel, H/V espelham o pincel.
+    this.input.keyboard.on('keydown-H', () => this.flip('x'));
+    this.input.keyboard.on('keydown-V', () => this.flip('y'));
     this.input.keyboard.on('keydown-C', () => this.toggleSelectionCollision());
+    this.input.keyboard.on('keydown-B', () => this.toggleSelectionPassThrough());
     this.input.keyboard.on('keydown-DELETE', () => this.deleteSelection());
     this.input.keyboard.on('keydown-BACKSPACE', () => this.deleteSelection());
     this.input.keyboard.on('keydown-LEFT', (event) => this.handleArrow(event, -1, 0));
@@ -276,20 +280,22 @@ export default class LevelEditorScene extends Phaser.Scene {
       .setDepth(1001)
       .setVisible(false);
 
+    // chão: os tiles e os objetos que são chão (faixas, rampas)
+    const groundKeys = [...TILE_MANIFEST, ...OBJECT_MANIFEST.filter((obj) => obj.ground)].map((item) => item.key);
     this.uiText(16, 72, 'Chão');
-    TILE_MANIFEST.forEach((tile, i) => {
-      this.addImageSwatch(16 + i * SWATCH_GAP, 90, tile.key);
+    groundKeys.forEach((key, i) => {
+      this.addImageSwatch(16 + i * SWATCH_GAP, 90, key);
     });
 
     // inimigos na mesma linha do chão (a de peças não tem mais espaço)
-    const enemiesX = 16 + TILE_MANIFEST.length * SWATCH_GAP + 40;
+    const enemiesX = 16 + groundKeys.length * SWATCH_GAP + 40;
     this.uiText(enemiesX, 72, 'Inimigos');
     ENEMY_ORDER.forEach((type, i) => {
       this.addEntitySwatch(enemiesX + i * SWATCH_GAP, 90, type);
     });
 
     this.uiText(16, 140, 'Objetos');
-    OBJECT_MANIFEST.forEach((obj, i) => {
+    OBJECT_MANIFEST.filter((obj) => !obj.ground).forEach((obj, i) => {
       this.addImageSwatch(16 + i * SWATCH_GAP, 158, obj.key);
     });
 
@@ -337,7 +343,7 @@ export default class LevelEditorScene extends Phaser.Scene {
   // Cor de conexão: alavanca/botão de uma cor aciona portões, grades, pontes,
   // escadas e chaves da mesma cor.
   buildChannelPicker(x, y) {
-    this.uiText(x, y - 18, 'Cor de conexão (alavanca/botão aciona a mesma cor)');
+    this.uiText(x, y - 18, 'Cor (gatilho aciona a mesma cor)');
     this.channelRing = this.add.graphics().setScrollFactor(0).setDepth(1001);
     this.channelOptions = [];
 
@@ -412,14 +418,21 @@ export default class LevelEditorScene extends Phaser.Scene {
     stepper(x, 148, 'Tamanho (%)', 'scale', MIN_ASSET_SCALE, MAX_ASSET_SCALE, 5, 25);
     toggle(x + 270, 148, 'Esticar', 'stretch', () => this.toggleAssetFlag('stretch'));
     this.assetWidgets.push(this.uiButton(x, 178, 'Restaurar padrão', () => this.resetAssetSettings()));
+    // com pincel de chão/objeto: espelha o pincel (as próximas peças saem assim)
+    this.brushFlipWidgets = [
+      this.uiButton(x + 140, 212, 'Espelhar ↔ · H', () => this.flip('x')),
+      this.uiButton(x + 284, 212, 'Espelhar ↕ · V', () => this.flip('y')),
+    ];
 
     // ações da seleção (só as peças selecionadas)
     this.selectionLabel = this.uiText(x, 218, '', { fontSize: '13px', color: '#9fe0ff' });
     this.selectionCollisionButton = this.uiButton(x + 428, 212, '', () => this.toggleSelectionCollision());
+    // só aparece se a seleção tiver chão
+    this.passThroughButton = this.uiButton(x + 270, 178, '', () => this.toggleSelectionPassThrough());
     this.selectionWidgets = [
       this.selectionLabel,
-      this.uiButton(x + 140, 212, 'Espelhar ↔ · H', () => this.flipSelection('x')),
-      this.uiButton(x + 284, 212, 'Espelhar ↕ · V', () => this.flipSelection('y')),
+      this.uiButton(x + 140, 212, 'Espelhar ↔ · H', () => this.flip('x')),
+      this.uiButton(x + 284, 212, 'Espelhar ↕ · V', () => this.flip('y')),
       this.selectionCollisionButton,
       this.uiButton(x + 610, 212, 'Apagar · Del', () => this.deleteSelection()),
     ];
@@ -432,12 +445,12 @@ export default class LevelEditorScene extends Phaser.Scene {
     return this.selectedBrush?.type === 'sprite' ? this.selectedBrush.key : null;
   }
 
-  // Variante que o painel ajusta ("asset" ou "asset|x"...): a normal do
-  // pincel, ou a das peças selecionadas (se forem todas chão/objeto do mesmo
-  // asset e espelhadas do mesmo jeito).
+  // Variante que o painel ajusta ("asset" ou "asset|x"...): a do pincel
+  // (como ele está espelhado), ou a das peças selecionadas (se forem todas
+  // chão/objeto do mesmo asset e espelhadas do mesmo jeito).
   panelVariantId() {
     const brushKey = this.selectedSpriteKey();
-    if (brushKey) return variantId(brushKey, '');
+    if (brushKey) return variantId(brushKey, variantOf(this.selectedBrush));
     const pieces = [...this.selection];
     if (pieces.length === 0 || !pieces.every(isSprite)) return null;
     const ids = new Set(pieces.map((piece) => variantId(piece.key, variantOf(piece))));
@@ -453,6 +466,9 @@ export default class LevelEditorScene extends Phaser.Scene {
     const id = this.panelVariantId();
     for (const widget of this.assetWidgets) widget.setVisible(Boolean(id));
     for (const widget of this.selectionWidgets) widget.setVisible(this.selection.size > 0);
+    for (const widget of this.brushFlipWidgets) widget.setVisible(Boolean(this.selectedSpriteKey()));
+    const grounds = [...this.selection].filter((piece) => isSprite(piece) && isGroundKey(piece.key));
+    this.passThroughButton.setVisible(grounds.length > 0);
 
     if (this.selection.size > 0) {
       const count = this.selection.size;
@@ -463,11 +479,16 @@ export default class LevelEditorScene extends Phaser.Scene {
       this.selectionCollisionButton
         .setText(`Colisão: ${state} · C`)
         .setBackgroundColor(state === 'Sim' ? '#2f7a4a' : state === 'Não' ? '#553333' : '#333355');
+      const through = grounds.filter(piecePassThrough).length;
+      const passState = through === grounds.length ? 'Sim' : through === 0 ? 'Não' : 'misto';
+      this.passThroughButton
+        .setText(`Atravessar por baixo: ${passState} · B`)
+        .setBackgroundColor(passState === 'Sim' ? '#2f7a4a' : passState === 'Não' ? '#553333' : '#333355');
     }
     this.panelTip.setText(
       this.selectedBrush
-        ? 'Shift + clique: passos maiores · a colisão ocupa a área na grade; "Mover sprite" só ajusta o desenho\nEsc: largar o pincel e voltar a selecionar'
-        : 'Sem pincel: clique seleciona · Shift+clique soma/tira · arraste num espaço pra selecionar uma área\nSetas movem · H/V espelham · C colisão · Del apaga (só as peças selecionadas) · Esc limpa'
+        ? 'Shift + clique: passos maiores · a colisão ocupa a área na grade; "Mover sprite" só ajusta o desenho\nH/V: espelhar o pincel · Esc: largar o pincel e voltar a selecionar'
+        : 'Sem pincel: clique seleciona · Shift+clique soma/tira · arraste num espaço pra selecionar uma área\nSetas movem · H/V espelham · C colisão · B atravessar por baixo (chão) · Del apaga · Esc limpa'
     );
 
     if (!id) {
@@ -648,6 +669,22 @@ export default class LevelEditorScene extends Phaser.Scene {
     else if (!gesture.additive) this.clearSelection();
   }
 
+  // H/V: com chão/objeto no pincel, espelha o pincel; senão, a seleção.
+  flip(axis) {
+    if (this.selectedSpriteKey()) this.flipBrush(axis);
+    else this.flipSelection(axis);
+  }
+
+  // As próximas peças colocadas já saem espelhadas assim.
+  flipBrush(axis) {
+    const field = axis === 'x' ? 'flipX' : 'flipY';
+    this.selectedBrush[field] = !this.selectedBrush[field];
+    playSfx(this, 'flip');
+    this.rebuildBrushPreview();
+    this.refreshBrushLabel();
+    this.refreshAssetPanel();
+  }
+
   // Espelha cada chão/objeto selecionado no próprio lugar. Espelhar troca a
   // variante da peça, que tem os próprios ajustes: a imagem é recriada.
   flipSelection(axis) {
@@ -673,6 +710,22 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.beforeMutate();
     const turnOn = !sprites.every(pieceCollision);
     for (const sprite of sprites) sprite.collision = turnOn;
+    playSfx(this, 'toggle');
+    this.selectionChanged();
+  }
+
+  // Liga/desliga "atravessar por baixo" no chão selecionado (objetos não
+  // mudam; se todo o chão já atravessa, desliga; senão, liga).
+  toggleSelectionPassThrough() {
+    if (this.carry) return; // com peça no ar: primeiro solte ou devolva
+    const grounds = [...this.selection].filter((piece) => isSprite(piece) && isGroundKey(piece.key));
+    if (grounds.length === 0) {
+      if (this.selection.size > 0) playSfx(this, 'nope');
+      return;
+    }
+    this.beforeMutate();
+    const turnOn = !grounds.every(piecePassThrough);
+    for (const sprite of grounds) sprite.passThrough = turnOn;
     playSfx(this, 'toggle');
     this.selectionChanged();
   }
@@ -835,7 +888,8 @@ export default class LevelEditorScene extends Phaser.Scene {
     if (!brush) return;
     if (brush.type === 'sprite') {
       // criada na célula (0, 0); a posição real é essa + o deslocamento da célula
-      const image = instantiateSprite(this, { key: brush.key, col: 0, row: 0 }, resolveAssetSettings(this.assetSettings, brush.key), TILE_SIZE);
+      const sprite = this.brushSprite({ col: 0, row: 0 });
+      const image = instantiateSprite(this, sprite, settingsFor(this.assetSettings, sprite), TILE_SIZE);
       image.baseX = image.x;
       image.baseY = image.y;
       this.brushPreview = image;
@@ -935,7 +989,8 @@ export default class LevelEditorScene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------------
-  // Ver colisão: pinta de vermelho as áreas sólidas de chão/objetos
+  // Ver colisão: pinta de vermelho as áreas sólidas de chão/objetos; o chão
+  // que se atravessa por baixo fica amarelo, com a borda de cima marcada
   // ---------------------------------------------------------------------
   toggleCollisionView() {
     this.showCollision = !this.showCollision;
@@ -950,10 +1005,12 @@ export default class LevelEditorScene extends Phaser.Scene {
   drawCollisionOverlay() {
     const g = this.collisionOverlay.clear();
     if (!this.showCollision) return;
-    g.fillStyle(0xff3355, 0.35);
-    g.lineStyle(2, 0xff3355, 0.9);
     for (const sprite of this.sprites) {
       if (!pieceCollision(sprite)) continue;
+      const passThrough = piecePassThrough(sprite);
+      const color = passThrough ? 0xffcc33 : 0xff3355;
+      g.fillStyle(color, passThrough ? 0.2 : 0.35);
+      g.lineStyle(2, color, 0.9);
       const { c0, c1, r0, r1 } = this.areaOf(sprite);
       const x = c0 * TILE_SIZE;
       const y = r0 * TILE_SIZE;
@@ -964,11 +1021,13 @@ export default class LevelEditorScene extends Phaser.Scene {
         const highX = sprite.flipX ? x : x + w;
         const lowX = sprite.flipX ? x + w : x;
         g.fillTriangle(lowX, y + h, highX, y + h, highX, y);
-        g.strokeTriangle(lowX, y + h, highX, y + h, highX, y);
+        if (passThrough) g.lineStyle(4, color, 1).lineBetween(lowX, y + h, highX, y);
+        else g.strokeTriangle(lowX, y + h, highX, y + h, highX, y);
         continue;
       }
       g.fillRect(x, y, w, h);
-      g.strokeRect(x, y, w, h);
+      if (passThrough) g.lineStyle(4, color, 1).lineBetween(x, y, x + w, y);
+      else g.strokeRect(x, y, w, h);
     }
   }
 
@@ -1018,7 +1077,8 @@ export default class LevelEditorScene extends Phaser.Scene {
       return;
     }
     if (brush.type === 'sprite') {
-      this.brushLabel.setText(`Pincel: ${brush.key}`);
+      const mirror = variantOf(brush) ? ` · ${variantLabel(variantOf(brush))}` : '';
+      this.brushLabel.setText(`Pincel: ${brush.key}${mirror}`);
       return;
     }
     const info = ENTITY_TYPES[brush.key];
@@ -1065,7 +1125,7 @@ export default class LevelEditorScene extends Phaser.Scene {
     const { type, key } = this.selectedBrush;
     if (type === 'sprite') {
       // arrastar pintando só faz sentido pra peças de 1 tile
-      const settings = resolveAssetSettings(this.assetSettings, key);
+      const settings = settingsFor(this.assetSettings, this.brushSprite({ col: 0, row: 0 }));
       this.isPainting = settings.cols === 1 && settings.rows === 1;
       this.placeSpriteAt(pointer.worldX, pointer.worldY);
     } else {
@@ -1097,7 +1157,8 @@ export default class LevelEditorScene extends Phaser.Scene {
     if (!cell) return;
     let area = { c0: cell.col, c1: cell.col, r0: cell.row, r1: cell.row };
     if (this.selectedBrush.type === 'sprite') {
-      area = spriteArea(cell, resolveAssetSettings(this.assetSettings, this.selectedBrush.key));
+      const sprite = this.brushSprite(cell);
+      area = spriteArea(sprite, settingsFor(this.assetSettings, sprite));
     }
     const fits = this.areaFits(area);
     g.lineStyle(2, fits ? 0xffffff : 0xff4444, 0.9);
@@ -1119,29 +1180,41 @@ export default class LevelEditorScene extends Phaser.Scene {
     return spriteArea(sprite, settingsFor(this.assetSettings, sprite));
   }
 
+  // Peça que o pincel de chão/objeto colocaria na célula (com o espelho dele).
+  brushSprite(cell) {
+    const { key, flipX = false, flipY = false } = this.selectedBrush;
+    return { key, col: cell.col, row: cell.row, flipX, flipY };
+  }
+
   // Coloca chão/objeto com a célula clicada como canto de baixo à esquerda.
   // O que estiver embaixo da área nova é substituído.
   placeSpriteAt(worldX, worldY) {
     const cell = this.cellOf(worldX, worldY);
     if (!cell) return;
-    const key = this.selectedBrush.key;
-    const area = spriteArea(cell, resolveAssetSettings(this.assetSettings, key));
+    const piece = this.brushSprite(cell);
+    const area = this.areaOf(piece);
     if (!this.areaFits(area)) return;
 
     const overlapping = this.sprites.filter((sprite) => areasOverlap(this.areaOf(sprite), area));
     const [only] = overlapping;
-    const same = overlapping.length === 1 && only.key === key && only.col === cell.col && only.row === cell.row;
+    const same =
+      overlapping.length === 1 &&
+      only.key === piece.key &&
+      only.col === piece.col &&
+      only.row === piece.row &&
+      only.flipX === piece.flipX &&
+      only.flipY === piece.flipY;
     if (same) return;
 
     this.beforeMutate();
     for (const sprite of overlapping) this.removeSprite(sprite);
-    this.addSprite({ key, col: cell.col, row: cell.row });
+    this.addSprite(piece);
     playSfx(this, 'place');
   }
 
   // collision ausente = padrão do asset (ver pieceCollision)
-  addSprite({ key, col, row, flipX = false, flipY = false, collision }) {
-    const sprite = { key, col, row, flipX, flipY, collision, image: null };
+  addSprite({ key, col, row, flipX = false, flipY = false, collision, passThrough = false }) {
+    const sprite = { key, col, row, flipX, flipY, collision, passThrough, image: null };
     sprite.image = instantiateSprite(this, sprite, settingsFor(this.assetSettings, sprite), TILE_SIZE);
     this.sprites.push(sprite);
   }

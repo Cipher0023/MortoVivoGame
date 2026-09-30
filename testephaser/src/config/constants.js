@@ -74,6 +74,27 @@ export const ATTACK = {
   ARM_SPIN: 720,
 };
 
+// Bola: o Vivo chuta com o botão de ataque (R / B / CHUTAR) quando ela está
+// no pé dele. Quica, rola e desce rampa; aciona o botão de parede e pesa no
+// botão de segurar. Caiu num buraco: volta pro lugar onde começou.
+export const BALL = {
+  RADIUS: 16,
+  // alcance do chute (centro a centro na horizontal; pés a pés na vertical)
+  KICK_REACH_X: 60,
+  KICK_REACH_Y: 40,
+  KICK_SPEED_X: 520,
+  KICK_SPEED_Y: -380,
+  BOUNCE: 0.55,
+  // no chão: fração da velocidade que sobra a cada segundo (atrito)
+  GROUND_KEEP_PER_S: 0.35,
+  // abaixo disso (px/s) no chão, para
+  STOP_SPEED: 12,
+  // aceleração morro abaixo numa rampa (px/s²)
+  SLOPE_ACCEL: 500,
+  // quique abaixo disso (px/s) não faz barulho
+  BOUNCE_SOUND_SPEED: 140,
+};
+
 // Água: o Vivo não morre na hora — afunda devagar, anda mais lento e não
 // consegue pular. Morre se afundar mais que 1 bloco abaixo da borda (aí o
 // parceiro não alcança mais pra puxar) ou depois de DROWN_MS, o que vier
@@ -167,6 +188,14 @@ export const COLORS = {
   BLOCK: 0x996633,
   BUTTON_UP: 0x888888,
   BUTTON_DOWN: 0x444444,
+  // botão de segurar (só fica apertado com peso em cima)
+  HOLD_BUTTON_UP: 0xd08a2a,
+  HOLD_BUTTON_DOWN: 0x6a4410,
+  // botão de parede (bola chutada ou braço arremessado)
+  WALL_BUTTON_UP: 0x3aa0d8,
+  WALL_BUTTON_DOWN: 0x1a4a66,
+  BALL: 0xf2f2f2,
+  BALL_PATCH: 0x222222,
   EXIT_BUTTON: 0x33cc66,
   PATROL_ENEMY: 0x9933cc,
   TALL_PATROL_ENEMY: 0x6a2a9a,

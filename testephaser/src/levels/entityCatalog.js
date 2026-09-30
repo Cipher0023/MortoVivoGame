@@ -6,10 +6,14 @@ import { COLORS } from '../config/constants.js';
 //
 // paint:   arrastar o mouse pinta várias células (água, portões, escadas...)
 // unique:  só pode existir uma na fase (colocar de novo move a existente)
-// channel: 'required' = precisa de cor (alavanca, botão: são os gatilhos)
+// channel: 'required' = precisa de cor (alavanca, botões: são os gatilhos)
 //          'optional' = com cor, a peça reage ao gatilho da mesma cor
 //                       (portão/grade abrem, ponte/escada/chave aparecem);
 //                       sem cor, funciona sempre do jeito normal
+//          O botão de segurar é o único gatilho que "desliga": sem peso em
+//          cima, portão/grade fecham, ponte/escada somem (a chave, uma vez
+//          à mostra, fica). Outro gatilho da mesma cor já acionado mantém
+//          tudo ligado.
 
 export const ENTITY_TYPES = {
   living: { label: 'Vivo', unique: true },
@@ -23,10 +27,13 @@ export const ENTITY_TYPES = {
   diver: { label: 'Mergulhador' },
   water: { label: 'Água', paint: true },
   box: { label: 'Caixa' },
+  ball: { label: 'Bola (o Vivo chuta)' },
   key: { label: 'Chave', channel: 'optional' },
   door: { label: 'Porta', paint: true },
   lever: { label: 'Alavanca', channel: 'required' },
   button: { label: 'Botão', channel: 'required' },
+  holdButton: { label: 'Botão de segurar (só com peso em cima)', channel: 'required' },
+  wallButton: { label: 'Botão de parede (bola ou braço)', channel: 'required' },
   gate: { label: 'Portão', paint: true, channel: 'optional' },
   grate: { label: 'Grade', paint: true, channel: 'optional' },
   bridge: { label: 'Ponte', paint: true, channel: 'optional' },
@@ -60,10 +67,14 @@ export const ENTITY_SHAPES = {
   diver: { w: 40, h: 28, align: 'center', color: COLORS.DIVER },
   water: { w: 64, h: 64, align: 'fill', color: COLORS.WATER },
   box: { w: 60, h: 60, align: 'bottom', texture: 'caixa2' },
+  ball: { w: 32, h: 32, align: 'bottom', texture: 'ball' },
   key: { w: 18, h: 18, align: 'center', color: COLORS.KEY },
   door: { w: 44, h: 64, align: 'fill', color: COLORS.DOOR },
   lever: { w: 16, h: 40, align: 'bottom', color: COLORS.LEVER_OFF },
   button: { w: 44, h: 12, align: 'bottom', color: COLORS.BUTTON_UP },
+  holdButton: { w: 44, h: 12, align: 'bottom', color: COLORS.HOLD_BUTTON_UP },
+  // no jogo gruda na parede ao lado (ver PlayScene); no editor fica no meio
+  wallButton: { w: 12, h: 44, align: 'center', color: COLORS.WALL_BUTTON_UP },
   gate: { w: 40, h: 64, align: 'fill', color: COLORS.WALL },
   grate: { w: 20, h: 64, align: 'fill', color: COLORS.GRATE },
   bridge: { w: 64, h: 16, align: 'top', color: COLORS.PLATFORM },

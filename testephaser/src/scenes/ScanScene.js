@@ -6,6 +6,7 @@ import QrScannerOverlay from '../qr/QrScannerOverlay.js';
 import { startPhase } from '../levels/startPhase.js';
 import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
+import { setLandscapeRequired } from '../ui/orientation.js';
 
 // Abre a câmera (QrScannerOverlay, por cima do canvas) e manda o jogador pra
 // fase do QR code lido. Fase ainda não construída = aviso "em construção".
@@ -38,9 +39,11 @@ export default class ScanScene extends Phaser.Scene {
 
   cancel() {
     playSfx(this, 'back');
-    // fecha já: com o celular em pé o jogo está pausado e a troca de
-    // cena (que também fecharia o leitor) só roda ao girar o aparelho
     this.closeScanner();
+    // o menu funciona em pé: libera já, senão, com o celular em pé, fechar o
+    // leitor mostraria o aviso de girar e pausaria o jogo antes de a troca
+    // de cena rodar
+    setLandscapeRequired(false);
     this.scene.start('MainMenu');
   }
 

@@ -40,8 +40,9 @@
         justify-content: center;
         align-items: center;
       }
-      /* Aviso de girar o aparelho: em qualquer tela na vertical — o jogo é
-         16:9 e fica minúsculo em pé. main.js pausa o jogo enquanto aparece. */
+      /* Aviso de girar o aparelho: tela na vertical, a partir do JOGAR (o
+         menu funciona em pé — ver src/ui/orientation.js, que também pausa o
+         jogo enquanto o aviso aparece). O jogo é 16:9 e fica minúsculo em pé. */
       #rotate-hint {
         display: none;
         position: fixed;
@@ -71,7 +72,7 @@
         60%, 100% { transform: rotate(90deg); }
       }
       @media (orientation: portrait) {
-        #rotate-hint {
+        body.landscape-required #rotate-hint {
           display: flex;
         }
       }

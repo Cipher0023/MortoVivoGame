@@ -48,6 +48,12 @@ export const SOUND_MANIFEST = [
   { id: 'unlock', files: variants('unlock', 2), volume: 0.6 },
   { id: 'door', files: variants('door', 1), volume: 0.6 },
   { id: 'push', files: variants('push', 5), volume: 0.35, rate: 0.8, vary: 0.1 },
+  // botão de segurar soltando / portão fechando de novo (sons reaproveitados)
+  { id: 'releaseButton', files: variants('pressButton', 1), volume: 0.5, rate: 0.75 },
+  { id: 'gateClose', files: variants('gateOpen', 1), volume: 0.6, rate: 0.85 },
+  // bola
+  { id: 'kick', files: variants('stomp', 3), volume: 0.6, rate: 1.3, vary: 0.08 },
+  { id: 'ballBounce', files: variants('armLand', 3), volume: 0.4, rate: 0.8, vary: 0.12 },
   // ataques
   { id: 'stomp', files: variants('stomp', 3), volume: 0.7, vary: 0.08 },
   { id: 'enemyStun', files: variants('enemyStun', 1), volume: 0.55 },
@@ -114,6 +120,8 @@ export const TILE_MANIFEST = [
 // têm colisão. A arte foi feita na escala de 128px por tile (ex.: 512x256 =
 // 4x2), então o tamanho padrão sai do tamanho original da imagem (`px`). O
 // editor deixa mudar tudo isso por fase (ver levels/assetSettings.js).
+// `ground`: é chão (fica na linha "Chão" da paleta e pode ser atravessado
+// pulando por baixo, se a peça pedir — ver piecePassThrough).
 export const OBJECT_MANIFEST = [
   { key: 'arbusto', file: 'arbusto.png', px: [127, 85], size: [1, 1], collision: false },
   { key: 'banco', file: 'banco.png', px: [231, 175], size: [2, 1], collision: false },
@@ -125,11 +133,11 @@ export const OBJECT_MANIFEST = [
   { key: 'hidrante', file: 'hidrante.png', px: [87, 124], size: [1, 1], collision: false },
   { key: 'pedra1', file: 'pedra1.png', px: [125, 83], size: [1, 1], collision: false },
   { key: 'pedra2', file: 'pedra2.png', px: [133, 99], size: [1, 1], collision: false },
-  { key: 'ground-strip-3', file: 'ground-strip-3.png', px: [383, 129], size: [3, 1], collision: true },
-  { key: 'dirt-grid-4x2', file: 'dirt-grid-4x2.png', px: [512, 256], size: [4, 2], collision: true },
+  { key: 'ground-strip-3', file: 'ground-strip-3.png', px: [383, 129], size: [3, 1], collision: true, ground: true },
+  { key: 'dirt-grid-4x2', file: 'dirt-grid-4x2.png', px: [512, 256], size: [4, 2], collision: true, ground: true },
   // Rampas (textura provisória: triângulo subindo pra direita — é só trocar
   // o arquivo). slope: a colisão é a superfície inclinada (levels/slopes.js).
-  { key: 'rampa-suave', file: 'rampa-suave.png', px: [256, 128], size: [2, 1], collision: true, slope: true },
-  { key: 'rampa-45', file: 'rampa-45.png', px: [128, 128], size: [1, 1], collision: true, slope: true },
-  { key: 'rampa-ingreme', file: 'rampa-ingreme.png', px: [128, 256], size: [1, 2], collision: true, slope: true },
+  { key: 'rampa-suave', file: 'rampa-suave.png', px: [256, 128], size: [2, 1], collision: true, ground: true, slope: true },
+  { key: 'rampa-45', file: 'rampa-45.png', px: [128, 128], size: [1, 1], collision: true, ground: true, slope: true },
+  { key: 'rampa-ingreme', file: 'rampa-ingreme.png', px: [128, 256], size: [1, 2], collision: true, ground: true, slope: true },
 ];

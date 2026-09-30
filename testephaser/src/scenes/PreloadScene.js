@@ -12,8 +12,27 @@ import {
   SOUND_MANIFEST,
 } from '../config/assetManifest.js';
 import { restoreMute, sfxKey } from '../audio/sfx.js';
+import { BALL, COLORS } from '../config/constants.js';
 import { PHASES, findPhaseByScan } from '../config/phases.js';
 import { startPhase } from '../levels/startPhase.js';
+
+// Bola desenhada (ainda sem arte): branca com gomos escuros, pra dar pra ver
+// ela girando ao rolar. Usada no jogo e no editor.
+function createBallTexture(scene) {
+  if (scene.textures.exists('ball')) return;
+  const r = BALL.RADIUS;
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(COLORS.BALL, 1).fillCircle(r, r, r);
+  g.fillStyle(COLORS.BALL_PATCH, 1);
+  g.fillCircle(r, r, r * 0.3);
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    g.fillCircle(r + Math.cos(a) * r * 0.78, r + Math.sin(a) * r * 0.78, r * 0.2);
+  }
+  g.lineStyle(2, COLORS.BALL_PATCH, 1).strokeCircle(r, r, r - 1);
+  g.generateTexture('ball', r * 2, r * 2);
+  g.destroy();
+}
 
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -40,6 +59,7 @@ export default class PreloadScene extends Phaser.Scene {
 
   create() {
     restoreMute(this.game);
+    createBallTexture(this);
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('scene') === 'editor') {

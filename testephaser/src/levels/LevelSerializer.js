@@ -2,10 +2,11 @@
 // de fase.
 //
 // Versão 3:
-//   tiles     [{ col, row, key, flipX?, flipY?, collision? }]  chão e objetos,
-//             todos na grade. (col, row) é a célula de baixo à esquerda; o
-//             tamanho vem de `assets`; espelho e colisão são só daquela peça
-//             (colisão ausente = padrão do asset)
+//   tiles     [{ col, row, key, flipX?, flipY?, collision?, passThrough? }]
+//             chão e objetos, todos na grade. (col, row) é a célula de baixo
+//             à esquerda; o tamanho vem de `assets`; espelho e colisão são só
+//             daquela peça (colisão ausente = padrão do asset); passThrough
+//             = chão que se atravessa pulando por baixo
 //   entities  [{ type, col, row, channel? }]  peças de mecânica (entityCatalog)
 //   assets    { [key ou key|variante]: ajustes }  só o que difere do herdado
 //             (ver assetSettings)
@@ -19,6 +20,7 @@ import {
   compactAssetSettings,
   decorationToSprite,
   defaultCollision,
+  isGroundKey,
   migrateAssetCollision,
 } from './assetSettings.js';
 
@@ -27,13 +29,14 @@ export function buildLevelData(sprites, gridConfig, entitiesList = [], assetSett
     version: 3,
     tileSize: gridConfig.tileSize,
     grid: { cols: gridConfig.cols, rows: gridConfig.rows },
-    tiles: sprites.map(({ col, row, key, flipX, flipY, collision }) => ({
+    tiles: sprites.map(({ col, row, key, flipX, flipY, collision, passThrough }) => ({
       col,
       row,
       key,
       ...(flipX ? { flipX: true } : {}),
       ...(flipY ? { flipY: true } : {}),
       ...(collision !== undefined && collision !== defaultCollision(key) ? { collision } : {}),
+      ...(passThrough && isGroundKey(key) ? { passThrough: true } : {}),
     })),
     entities: entitiesList.map(({ type, col, row, channel }) => (channel ? { type, col, row, channel } : { type, col, row })),
     assets: compactAssetSettings(assetSettings),
@@ -81,7 +84,8 @@ export function isValidLevelData(data) {
       inGrid(t.col, t.row, cols, rows) &&
       optionalBool(t.flipX) &&
       optionalBool(t.flipY) &&
-      optionalBool(t.collision)
+      optionalBool(t.collision) &&
+      optionalBool(t.passThrough)
   );
   const decorationsOk = (data.decorations ?? []).every(
     (d) => d && isSpriteKey(d.key) && Number.isFinite(d.x) && Number.isFinite(d.y)

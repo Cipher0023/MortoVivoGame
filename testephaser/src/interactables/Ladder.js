@@ -16,4 +16,11 @@ export default class Ladder extends TexturedBlock {
     this.setVisible(true);
     playSfx(this.scene, 'ladderDrop');
   }
+
+  // botão de segurar solto: some de novo (quem estava subindo solta)
+  retract() {
+    if (!this.dropped) return;
+    this.dropped = false;
+    this.setVisible(false);
+  }
 }

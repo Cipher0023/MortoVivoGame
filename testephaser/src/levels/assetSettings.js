@@ -13,9 +13,10 @@ import { TILE_MANIFEST, OBJECT_MANIFEST } from '../config/assetManifest.js';
 // O arquivo da fase (campo `assets`) guarda só o que difere do herdado,
 // com a chave "asset" (normal) ou "asset|x", "asset|y", "asset|xy".
 //
-// Espelho e colisão NÃO são ajustes da variante: são de cada peça colocada
-// (flipX/flipY/collision no arquivo). Sem `collision` na peça, vale o padrão
-// do asset (chão sólido; objetos conforme o manifesto).
+// Espelho, colisão e "atravessar por baixo" NÃO são ajustes da variante: são
+// de cada peça colocada (flipX/flipY/collision/passThrough no arquivo). Sem
+// `collision` na peça, vale o padrão do asset (chão sólido; objetos conforme
+// o manifesto).
 
 export const MAX_ASSET_TILES = 8;
 export const MAX_ASSET_OFFSET = 64;
@@ -120,6 +121,17 @@ export function defaultCollision(key) {
 
 export function pieceCollision(sprite) {
   return sprite.collision ?? defaultCollision(sprite.key);
+}
+
+// Chão: os tiles e os objetos marcados `ground` no manifesto (faixas, rampas).
+export function isGroundKey(key) {
+  return TILE_KEYS.has(key) || Boolean(OBJECTS.get(key)?.ground);
+}
+
+// Chão que se atravessa pulando por baixo e segura quem pousa em cima (como
+// as plataformas do Mario). Só vale pra chão; objetos são sempre sólidos.
+export function piecePassThrough(sprite) {
+  return isGroundKey(sprite.key) && Boolean(sprite.passThrough);
 }
 
 // Formato anterior guardava colisão por asset: passa pra cada peça daquele

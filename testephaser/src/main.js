@@ -8,6 +8,7 @@ import MainMenuScene from './scenes/MainMenuScene.js';
 import TutorialScene from './scenes/TutorialScene.js';
 import ScanScene from './scenes/ScanScene.js';
 import { GAME_WIDTH, GAME_HEIGHT, PHYSICS } from './config/constants.js';
+import { initOrientation } from './ui/orientation.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -15,7 +16,9 @@ const config = {
   backgroundColor: '#1a1a2e',
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    // Quem centraliza é o CSS (#game-container é flex): centralizar aqui
+    // também somava a margem do Phaser à do flex e deslocava o jogo.
+    autoCenter: Phaser.Scale.NO_CENTER,
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
     // Nunca escala acima da resolução nativa (1920x1080): em telas normais o
@@ -53,9 +56,5 @@ const config = {
 const game = new Phaser.Game(config);
 window.__game = game;
 
-// Tela na vertical: o index.html cobre o jogo com o aviso de girar; aqui o
-// jogo pausa junto, pra ninguém morrer enquanto gira o aparelho.
-const portrait = window.matchMedia('(orientation: portrait)');
-const syncOrientation = () => (portrait.matches ? game.pause() : game.resume());
-portrait.addEventListener('change', syncOrientation);
-game.events.once(Phaser.Core.Events.READY, syncOrientation);
+// aviso de girar só depois do menu, pausa e reencaixe ao girar (ver orientation.js)
+initOrientation(game);

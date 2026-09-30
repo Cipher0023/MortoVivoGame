@@ -2,7 +2,8 @@
 // mapping": Xbox; no PlayStation A = ✕, B = ○, X = □, Y = △). O navegador só
 // mostra o controle pro jogo depois do primeiro botão apertado nele.
 //
-// Fase: A pula, X ação, B/RT braço (segurar mira, soltar arremessa), Y troca,
+// Fase: A pula, X ação, B/RT ataque (Esqueleto: segurar mira, soltar
+// arremessa o braço; Vivo: chuta a bola), Y troca,
 // LB esperar/seguir, RB cabeça (Esqueleto), Select sai. Menus: A confirma, B/Select volta.
 
 export const PAD = {

@@ -1,14 +1,17 @@
 import Phaser from 'phaser';
-import { COLORS, PHYSICS, CAMERA, ATTACK, SKELETON, WATER, PULL_UP, SLOPE } from '../config/constants.js';
+import { COLORS, PHYSICS, CAMERA, ATTACK, SKELETON, WATER, PULL_UP, SLOPE, BALL } from '../config/constants.js';
 import Living from '../entities/Living.js';
 import Skeleton from '../entities/Skeleton.js';
 import { createEnemy, isEnemyType } from '../entities/enemyTypes.js';
 import ThrownArm from '../entities/ThrownArm.js';
 import SkullHead from '../entities/SkullHead.js';
+import Ball from '../entities/Ball.js';
 import Hazard from '../hazards/Hazard.js';
 import StaticWall from '../interactables/StaticWall.js';
 import PushableBlock from '../interactables/PushableBlock.js';
 import PressureButton from '../interactables/PressureButton.js';
+import HoldButton from '../interactables/HoldButton.js';
+import WallButton from '../interactables/WallButton.js';
 import Lever from '../interactables/Lever.js';
 import KeyItem from '../interactables/KeyItem.js';
 import LockedDoor from '../interactables/LockedDoor.js';
@@ -17,8 +20,8 @@ import Ladder from '../interactables/Ladder.js';
 import CharacterManager from '../systems/CharacterManager.js';
 import FollowSystem from '../systems/FollowSystem.js';
 import { buildLevelFromData, disableInternalFaces } from '../levels/LevelLoader.js';
-import { supportY, surfaceY, slopeVelocity } from '../levels/slopes.js';
-import { settingsFor, spriteArea } from '../levels/assetSettings.js';
+import { supportY, surfaceY, slopeVelocity, isSlopeKey } from '../levels/slopes.js';
+import { settingsFor, spriteArea, pieceCollision, piecePassThrough } from '../levels/assetSettings.js';
 import { ENTITY_SHAPES, entityCenter, createChannelMarker } from '../levels/entityCatalog.js';
 import { isTouchEnabled } from './TouchControlsScene.js';
 import { playSfx } from '../audio/sfx.js';
@@ -105,6 +108,9 @@ export default class PlayScene extends Phaser.Scene {
     const S = this.cellSize;
     this.levers = [];
     this.buttons = [];
+    this.holdButtons = [];
+    this.wallButtons = [];
+    this.balls = [];
     this.gates = [];
     this.grates = [];
     this.bridges = [];
@@ -116,8 +122,13 @@ export default class PlayScene extends Phaser.Scene {
     this.waters = [];
     this.exits = [];
     this.spawns = {};
-    // cor de conexão -> ações dos alvos daquela cor
+    // cor de conexão -> alvos daquela cor: [{ on, off }] (ver triggerChannel)
     this.channelTargets = new Map();
+    this.channelLatched = new Set(); // cores acionadas de vez (alavanca, botões)
+    this.channelHolds = new Map(); // cor -> botões de segurar apertados agora
+    this.channelOn = new Map(); // cor -> ligada agora
+    this.pendingCloses = new Set(); // portões/grades esperando o caminho livrar pra fechar
+    this.solidCells = this.findSolidCells();
 
     const entities = this.levelData.entities;
     const waterCells = new Set(entities.filter((e) => e.type === 'water').map((e) => `${e.col},${e.row}`));
@@ -151,8 +162,12 @@ export default class PlayScene extends Phaser.Scene {
         case 'box':
           this.boxes.push(new PushableBlock(this, x, y, shape.w, shape.h));
           break;
+        case 'ball':
+          this.balls.push(new Ball(this, x, y));
+          break;
         case 'key': {
           const key = new KeyItem(this, x, y, { startRevealed: !e.channel });
+          // (uma vez à mostra, fica — mesmo com o botão de segurar solto)
           if (e.channel) this.onChannel(e.channel, () => key.reveal());
           this.keyItems.push(key);
           break;
@@ -176,6 +191,18 @@ export default class PlayScene extends Phaser.Scene {
           this.buttons.push(button);
           break;
         }
+        case 'holdButton': {
+          const button = new HoldButton(this, x, y, (held) => this.setChannelHold(e.channel, button, held));
+          this.addTriggerMarker(button, e.channel);
+          this.holdButtons.push(button);
+          break;
+        }
+        case 'wallButton': {
+          const button = new WallButton(this, this.wallButtonX(e.col, e.row), y, () => this.triggerChannel(e.channel));
+          this.addTriggerMarker(button, e.channel);
+          this.wallButtons.push(button);
+          break;
+        }
         case 'gate':
         case 'grate': {
           const wall = new StaticWall(this, x, y, shape.w, shape.h, shape.color);
@@ -183,7 +210,15 @@ export default class PlayScene extends Phaser.Scene {
           wall.row = e.row;
           if (e.channel) {
             wall.setMarker(createChannelMarker(this, x, y - S / 2 + 12, e.channel));
-            this.onChannel(e.channel, () => wall.destroyWall());
+            this.onChannel(
+              e.channel,
+              () => {
+                this.pendingCloses.delete(wall);
+                wall.destroyWall();
+              },
+              // fecha quando ninguém estiver no caminho (ver updatePendingCloses)
+              () => this.pendingCloses.add(wall)
+            );
           }
           (e.type === 'gate' ? this.gates : this.grates).push(wall);
           break;
@@ -196,19 +231,27 @@ export default class PlayScene extends Phaser.Scene {
           bridge.body.checkCollision.left = false;
           bridge.body.checkCollision.right = false;
           if (e.channel) {
-            this.onChannel(e.channel, () => {
-              if (bridge.body.enable) return;
-              bridge.setColor(COLORS.BRIDGE_ACTIVE);
-              bridge.setSolid(true);
-              playSfx(this, 'bridge');
-            });
+            this.onChannel(
+              e.channel,
+              () => {
+                if (bridge.body.enable) return;
+                bridge.setColor(COLORS.BRIDGE_ACTIVE);
+                bridge.setSolid(true);
+                playSfx(this, 'bridge');
+              },
+              () => {
+                if (!bridge.body.enable) return;
+                bridge.setSolid(false);
+                playSfx(this, 'bridge');
+              }
+            );
           }
           this.bridges.push(bridge);
           break;
         }
         case 'ladder': {
           const ladder = new Ladder(this, x, y, shape.w, shape.h, { startDropped: !e.channel });
-          if (e.channel) this.onChannel(e.channel, () => ladder.drop());
+          if (e.channel) this.onChannel(e.channel, () => ladder.drop(), () => ladder.retract());
           this.ladders.push(ladder);
           break;
         }
@@ -234,15 +277,59 @@ export default class PlayScene extends Phaser.Scene {
     ]);
   }
 
-  onChannel(channel, action) {
+  // on: o que o alvo faz quando a cor liga; off (opcional): quando desliga
+  // (só acontece com o botão de segurar)
+  onChannel(channel, on, off = null) {
     if (!this.channelTargets.has(channel)) this.channelTargets.set(channel, []);
-    this.channelTargets.get(channel).push(action);
+    this.channelTargets.get(channel).push({ on, off });
   }
 
-  // alavanca/botão acionado: tudo da mesma cor reage (as ações são
-  // idempotentes, então dois gatilhos da mesma cor não dão problema)
+  // Alavanca, botão ou botão de parede acionado: a cor fica ligada de vez.
   triggerChannel(channel) {
-    for (const action of this.channelTargets.get(channel) ?? []) action();
+    this.channelLatched.add(channel);
+    this.refreshChannel(channel);
+  }
+
+  // Botão de segurar: a cor fica ligada enquanto algum deles estiver apertado.
+  setChannelHold(channel, button, held) {
+    if (!this.channelHolds.has(channel)) this.channelHolds.set(channel, new Set());
+    const holds = this.channelHolds.get(channel);
+    if (held) holds.add(button);
+    else holds.delete(button);
+    this.refreshChannel(channel);
+  }
+
+  // Liga/desliga os alvos só quando o estado da cor muda.
+  refreshChannel(channel) {
+    const on = this.channelLatched.has(channel) || (this.channelHolds.get(channel)?.size ?? 0) > 0;
+    if (on === (this.channelOn.get(channel) ?? false)) return;
+    this.channelOn.set(channel, on);
+    for (const target of this.channelTargets.get(channel) ?? []) {
+      if (on) target.on();
+      else target.off?.();
+    }
+  }
+
+  // Células cobertas por chão/objeto sólido de verdade (sem rampas nem chão
+  // de atravessar): é onde o botão de parede pode se apoiar.
+  findSolidCells() {
+    const cells = new Set();
+    for (const sprite of this.levelData.tiles) {
+      if (!pieceCollision(sprite) || piecePassThrough(sprite) || isSlopeKey(sprite.key)) continue;
+      const { c0, c1, r0, r1 } = spriteArea(sprite, settingsFor(this.levelData.assets, sprite));
+      for (let c = c0; c <= c1; c++) for (let r = r0; r <= r1; r++) cells.add(`${c},${r}`);
+    }
+    return cells;
+  }
+
+  // Botão de parede gruda na parede ao lado (a da direita, se houver as duas);
+  // sem parede, fica no meio da célula.
+  wallButtonX(col, row) {
+    const S = this.cellSize;
+    const half = ENTITY_SHAPES.wallButton.w / 2;
+    if (this.solidCells.has(`${col + 1},${row}`)) return (col + 1) * S - half;
+    if (this.solidCells.has(`${col - 1},${row}`)) return col * S + half;
+    return col * S + S / 2;
   }
 
   addTriggerMarker(trigger, channel) {
@@ -380,6 +467,13 @@ export default class PlayScene extends Phaser.Scene {
     // botão de pressão: qualquer um dos dois aciona pisando em cima
     this.physics.add.overlap(both, this.buttons, (character, button) => button.press());
 
+    // bola: bate em tudo que é sólido (passa pelos personagens, que só a
+    // chutam) e aciona o botão de parede ao bater nele. Rampa: apoio da
+    // PlayScene, como os personagens (ver updateSlopes).
+    this.physics.add.collider(this.balls, [...solids, ...this.grates, ...this.bridges, ...this.boxes]);
+    this.physics.add.collider(this.balls, this.balls);
+    this.physics.add.collider(this.balls, this.wallButtons, (ball, button) => button.hit());
+
     // saída: qualquer personagem encerra a fase
     this.physics.add.overlap(both, this.exits, () => this.onExitReached());
   }
@@ -432,8 +526,11 @@ export default class PlayScene extends Phaser.Scene {
     this.updateSlopes();
 
     const active = this.characterManager.getActive();
-    // mirando o braço, a Esqueleto fica parada (←/→ só viram o lado)
-    const aiming = this.updateArmAim(active, attackHeld, attackPressed, moveX, time);
+    // ataque: o Vivo chuta a bola; a Esqueleto mira o braço (parada — ←/→
+    // só viram o lado)
+    const kickPressed = attackPressed && active === this.living;
+    if (kickPressed && !this.tryKick()) playSfx(this, 'nope');
+    const aiming = this.updateArmAim(active, attackHeld, attackPressed && !kickPressed, moveX, time);
     // pular ao lado do parceiro 1 bloco acima: ele puxa (no lugar do pulo)
     const pulled = jumpPressed && !aiming && this.tryAutoPull(active);
     active.handleMovement({ x: aiming ? 0 : moveX, jump: aiming || pulled ? false : jumpDown });
@@ -473,6 +570,9 @@ export default class PlayScene extends Phaser.Scene {
     for (const enemy of this.enemies) enemy.update();
     this.updateThrownArm();
     this.updateHead();
+    this.updateBalls(delta);
+    this.updateHoldButtons();
+    this.updatePendingCloses();
 
     const fallLine = this.worldHeight + FALL_DEATH_MARGIN;
     if (this.living.body.top > fallLine || this.skeleton.body.top > fallLine) {
@@ -493,7 +593,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------
   updateSlopes() {
     if (this.slopes.length === 0) return;
-    const objects = [this.living, this.skeleton, this.head?.object, this.arm?.object];
+    const objects = [this.living, this.skeleton, this.head?.object, this.arm?.object, ...this.balls];
     for (const object of objects) {
       if (!object?.body?.enable || object.beingPulled || object.climbing) continue;
       object.onSlope = this.snapToSlope(object);
@@ -574,8 +674,8 @@ export default class PlayScene extends Phaser.Scene {
     if (!this.aim) {
       if (!pressed) return false;
       if (!canAim) {
-        // Vivo não arremessa (ataca pulando na cabeça); Esqueleto sem o
-        // braço, no ar ou na escada também não
+        // Esqueleto sem o braço, no ar ou na escada não arremessa (o Vivo
+        // nem chega aqui: o ataque dele é o chute, ver tryKick)
         playSfx(this, 'nope');
         return false;
       }
@@ -640,6 +740,11 @@ export default class PlayScene extends Phaser.Scene {
     // passa pela grade (é fino como a Esqueleto no modo fino)
     const colliders = [
       this.physics.add.collider(object, solids, () => object.land()),
+      // botão de parede: o braço voando aciona e cai
+      this.physics.add.collider(object, this.wallButtons, (arm, button) => {
+        if (object.flying) button.hit();
+        object.land();
+      }),
       this.physics.add.overlap(object, this.enemies, (arm, enemy) => {
         if (!object.flying) return;
         enemy.stun('hit');
@@ -669,6 +774,77 @@ export default class PlayScene extends Phaser.Scene {
     this.arm.object.update();
     // caiu num buraco: o braço volta sozinho (senão a fase travaria)
     if (this.arm.object.body.top > this.worldHeight + FALL_DEATH_MARGIN) this.pickUpArm();
+  }
+
+  // ---------------------------------------------------------------------
+  // Bola e botões
+  // ---------------------------------------------------------------------
+  // Bola no pé do Vivo (na frente dele, ou quase embaixo)?
+  ballInReach() {
+    const living = this.living;
+    const facing = living.flipX ? -1 : 1;
+    return (
+      this.balls.find((ball) => {
+        const dx = ball.x - living.x;
+        return (
+          Math.abs(dx) < BALL.KICK_REACH_X &&
+          (Math.sign(dx) === facing || Math.abs(dx) < living.body.halfWidth) &&
+          Math.abs(ball.body.bottom - living.body.bottom) < BALL.KICK_REACH_Y
+        );
+      }) ?? null
+    );
+  }
+
+  // Chuta pra frente. Retorna false se não tinha bola no pé.
+  tryKick() {
+    const ball = this.ballInReach();
+    if (!ball) return false;
+    ball.kick(this.living.flipX ? -1 : 1);
+    return true;
+  }
+
+  updateBalls(delta) {
+    for (const ball of this.balls) {
+      // rampa: rola morro abaixo
+      if (ball.onSlope) ball.body.velocity.x -= ball.onSlope.up * BALL.SLOPE_ACCEL * (delta / 1000);
+      ball.update(delta);
+      if (ball.body.top > this.worldHeight + FALL_DEATH_MARGIN) ball.respawn();
+    }
+  }
+
+  // Botão de segurar: apertado enquanto tiver peso em cima.
+  updateHoldButtons() {
+    if (this.holdButtons.length === 0) return;
+    const weights = [this.living, this.skeleton, ...this.boxes, ...this.balls, this.head?.object].filter(Boolean);
+    for (const button of this.holdButtons) {
+      button.setHeld(weights.some((weight) => this.physics.overlap(weight, button)));
+    }
+  }
+
+  // Portão/grade só fecham com o caminho livre (fechar em cima de alguém o
+  // prenderia dentro da parede).
+  updatePendingCloses() {
+    if (this.pendingCloses.size === 0) return;
+    const bodies = [
+      this.living,
+      this.skeleton,
+      ...this.boxes,
+      ...this.balls,
+      ...this.enemies,
+      this.head?.object,
+      this.arm?.object,
+    ]
+      .filter(Boolean)
+      .map((object) => object.body);
+    for (const wall of this.pendingCloses) {
+      const bounds = wall.getBounds();
+      const blocked = bodies.some(
+        (body) => body.right > bounds.left && body.left < bounds.right && body.bottom > bounds.top && body.top < bounds.bottom
+      );
+      if (blocked) continue;
+      wall.closeWall();
+      this.pendingCloses.delete(wall);
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -1071,6 +1247,7 @@ export default class PlayScene extends Phaser.Scene {
       alerts.push(`O Vivo está se afogando! ${left}s (${rescue})`);
     }
     const partner = this.partnerOf(active);
+    if (active === this.living && this.ballInReach()) alerts.push('Ataque: chutar a bola');
     if (this.canPull(active, partner)) alerts.push('Ação: puxar o parceiro');
     else if (!this.living.inWater && this.canPull(partner, active)) alerts.push('Pule: o parceiro te puxa');
     this.hud.setStatus(
@@ -1085,7 +1262,26 @@ export default class PlayScene extends Phaser.Scene {
     // (setText ignora texto igual, então chamar todo frame é barato)
     if (this.touchControls?.buttons) {
       this.touchControls.setButtonLabel('wait', waiting ? 'SEGUIR' : 'ESPERAR');
+      this.touchControls.setButtonLabel('attack', active === this.living ? 'CHUTAR' : 'BRAÇO');
+      this.updateTouchButtons(active);
     }
+  }
+
+  // Celular: só aparecem os botões que o personagem ativo consegue usar
+  // agora (TROCAR, ESPERAR e AÇÃO ficam sempre — ação serve pros dois).
+  //   PULAR   some com a Esqueleto desmontada (ela não se mexe)
+  //   CHUTAR  Vivo, só em fase com bola
+  //   BRAÇO   Esqueleto montada e com o braço no corpo
+  //   CABEÇA  só a Esqueleto tira/põe (o Vivo carrega a cabeça com a AÇÃO);
+  //           some desmontada ou com a cabeça nas mãos do Vivo
+  updateTouchButtons(active) {
+    const skeleton = this.skeleton;
+    const isSkeleton = active === skeleton;
+    const skeletonFree = isSkeleton && !skeleton.collapsed;
+    const touch = this.touchControls;
+    touch.setButtonVisible('jump', !(isSkeleton && skeleton.collapsed));
+    touch.setButtonVisible('attack', isSkeleton ? skeletonFree && skeleton.hasArm : this.balls.length > 0);
+    touch.setButtonVisible('head', skeletonFree && this.head?.object.carrier !== this.living);
   }
 
   triggerDeath(reason) {

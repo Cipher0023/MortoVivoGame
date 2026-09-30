@@ -59,6 +59,10 @@ export const SFX = {
   unlock: { layers: [noise('highpass', 2500, 0.04, 0.15), tone('square', 1200, 900, 0.05, 0.06, 0.06)] },
   door: { layers: [tone('sawtooth', 90, 140, 0.35, 0.08), noise('lowpass', 500, 0.3, 0.2)] },
   push: { layers: [noise('lowpass', 300, 0.14, 0.2)], cooldown: 0 },
+  releaseButton: { layers: [tone('square', 200, 400, 0.08, 0.1), noise('lowpass', 800, 0.05, 0.12)] },
+  gateClose: { layers: [tone('sawtooth', 60, 120, 0.4, 0.08), noise('lowpass', 600, 0.4, 0.2)] },
+  kick: { layers: [noise('lowpass', 1200, 0.06, 0.35), tone('triangle', 260, 140, 0.08, 0.12)] },
+  ballBounce: { layers: [tone('sine', 220, 160, 0.06, 0.12)], cooldown: 80 },
 
   // ataques
   stomp: { layers: [noise('lowpass', 500, 0.12, 0.35), tone('triangle', 220, 90, 0.12, 0.12)] },
