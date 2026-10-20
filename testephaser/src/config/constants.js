@@ -17,8 +17,8 @@ export const GAME_HEIGHT = 1080;
 // mais longe, menor tudo fica); raise: quantos px a grade do fundo sobe em
 // relação à fase (ver levels/layerGrid.js).
 export const BACKGROUND_LAYERS = {
-  near: { label: 'Fundo perto', factor: 0.6, depth: -10, scale: 0.75, raise: 8 },
-  far: { label: 'Fundo longe', factor: 0.3, depth: -20, scale: 0.5, raise: 16 },
+  near: { label: 'Fundo perto', factor: 0.45, depth: -10, scale: 0.75, raise: 8 },
+  far: { label: 'Fundo longe', factor: 0.2, depth: -20, scale: 0.5, raise: 16 },
 };
 
 export const CAMERA = {
