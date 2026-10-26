@@ -13,6 +13,12 @@ O jogo é um **site estático**: o Vite gera HTML, JS, imagens e sons na pasta
 os arquivos. Não há servidor Node, banco de dados nem processo rodando para o
 jogo.
 
+A página https://mortovivo.cristiancobra.com.br/sobre/ ("Sobre o projeto") não
+faz parte deste repositório. Ela fica em outra pasta do servidor
+(`/var/www/mortovivo-sobre/`) e tem deploy próprio, então o deploy do jogo não a
+apaga. Evite criar uma rota `/sobre` no jogo, porque o nginx a desviaria para
+essa página.
+
 ```
 máquina local                          COBRA Server (VPS do Cristian)
 ─────────────                          ──────────────────────────────
