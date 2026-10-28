@@ -10,6 +10,10 @@ carregados de CDN.
 ## Pastas
 
 - `paginas/`: imagens originais das páginas (ver o README de lá). Não são publicadas.
+- `animacoes/`: os personagens animados, uma pasta de quadros PNG por animação.
+  O [README de lá](animacoes/README.md) explica como o ilustrador entrega os quadros.
+- `cenas.json`: quais animações aparecem em cada página, com posição, tamanho e
+  movimento. Trocar ou acrescentar uma animação não exige mexer em código.
 - `prototipo/`: a página de AR. O `targets.mind` e o `alvos.json` são gerados
   pelo compilador. Não edite esses dois arquivos à mão.
 - `ferramentas/`: o compilador dos alvos.

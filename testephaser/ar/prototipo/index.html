@@ -116,16 +116,21 @@ const GAME_URL = 'https://mortovivo.cristiancobra.com.br/';
 // ?debug=1 desenha a borda da página reconhecida (pra ver se o encaixe treme)
 const DEBUG = new URLSearchParams(location.search).has('debug');
 
-// Guri: os quadros de caminhada do jogo (public/assets/boy)
-const WALK_FRAMES = 12;
-const WALK_FPS = 14;
-// medidas em "larguras de página" (o MindAR põe a página com largura 1,
-// centro na origem, x pra direita, y pra cima, z saindo do papel)
-const GURI_HEIGHT = 0.36;
-const GURI_ASPECT = 202 / 291;
-const WALK_SPEED = 0.16;
-const WALK_LIMIT = 0.32;
-const WALK_Y = -0.28;
+// O que aparece sobre cada página vem do ar/cenas.json; as opções estão
+// explicadas em ar/animacoes/README.md. Medidas em "larguras de página": o
+// MindAR põe a página com largura 1, centro na origem, x pra direita, y pra
+// cima e z saindo do papel.
+const ACTOR_DEFAULTS = {
+  movimento: 'parado',
+  altura: 0.36,
+  x: 0,
+  y: -0.28,
+  fps: 12,
+  distancia: 0.3,
+  velocidade: 0.16,
+  espelhar: false,
+  sombra: true,
+};
 const POP_MS = 450;
 const MAX_TILT = THREE.MathUtils.degToRad(80);
 
@@ -133,7 +138,11 @@ const $ = (id) => document.getElementById(id);
 const status = $('status');
 const playButton = $('jogar');
 
-const targets = await fetch('./alvos.json').then((r) => r.json());
+// alvos.json: as páginas na ordem do targets.mind (gerado pelo compilador);
+// animacoes.json: os quadros de cada pasta de ar/animacoes (gerado ao publicar)
+const [targets, scenes, animations] = await Promise.all(
+  ['./alvos.json', './cenas.json', './animacoes.json'].map((file) => fetch(file).then((r) => r.json())),
+);
 
 let mindar = null;
 
@@ -159,8 +168,8 @@ async function start() {
   });
   const { renderer, scene, camera } = mindar;
 
-  const frames = await loadWalkFrames();
-  const characters = targets.map((target, index) => buildTarget(target, index, frames));
+  const frames = await loadAnimations();
+  const actors = targets.flatMap((target, index) => buildTarget(target, index, frames));
 
   try {
     await mindar.start();
@@ -179,59 +188,21 @@ async function start() {
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
-    for (const character of characters) character.update(dt);
+    for (const actor of actors) actor.update(dt);
     renderer.render(scene, camera);
   });
 }
 
+// Liga a página `index` do targets.mind à sua fase e às animações dela.
 function buildTarget(target, index, frames) {
   const phase = PHASES.find((p) => p.number === target.phase);
   const anchor = mindar.addAnchor(index);
-  const stage = new THREE.Group();
-  anchor.group.add(stage);
+  const appear = { at: 0 };
 
-  // sombra no papel
-  const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.5, 32),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false }),
-  );
-  shadow.scale.set(GURI_HEIGHT * GURI_ASPECT * 0.9, GURI_HEIGHT * 0.12, 1);
-  shadow.position.z = 0.002;
-  stage.add(shadow);
-
-  // Guri apoiado nos pés, girando em torno deles pra ficar de frente pra
-  // câmera (ver update): com o celular inclinado ele fica em pé; com o
-  // celular de frente pra página, deita sobre ela em vez de virar um risco
-  const material = new THREE.MeshBasicMaterial({
-    map: frames[0], transparent: true, alphaTest: 0.1, side: THREE.DoubleSide,
-  });
-  const geometry = new THREE.PlaneGeometry(GURI_HEIGHT * GURI_ASPECT, GURI_HEIGHT);
-  geometry.translate(0, GURI_HEIGHT / 2, 0);
-  const guri = new THREE.Mesh(geometry, material);
-  guri.position.z = 0.003;
-  stage.add(guri);
-  const cameraLocal = new THREE.Vector3();
-
-  if (DEBUG) {
-    const half = 0.5;
-    const top = 0.5 * (target.height ?? 1);
-    const border = new THREE.LineLoop(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-half, -top, 0), new THREE.Vector3(half, -top, 0),
-        new THREE.Vector3(half, top, 0), new THREE.Vector3(-half, top, 0),
-      ]),
-      new THREE.LineBasicMaterial({ color: 0xe0006a }),
-    );
-    anchor.group.add(border);
-  }
-
-  let x = -WALK_LIMIT;
-  let dir = 1;
-  let frameTime = 0;
-  let poppedAt = null;
+  if (DEBUG) anchor.group.add(pageBorder(target.height ?? 1));
 
   anchor.onTargetFound = () => {
-    poppedAt = performance.now();
+    appear.at = performance.now();
     status.textContent = 'Achei a página!';
     if (phase) {
       playButton.textContent = `Jogar a ${phase.title}`;
@@ -243,45 +214,112 @@ function buildTarget(target, index, frames) {
     status.textContent = 'Procurando a página…';
   };
 
+  const configs = scenes[`fase${target.phase}`] ?? [];
+  return configs
+    .filter((config) => frames[config.animacao])
+    .map((config) => buildActor({ ...ACTOR_DEFAULTS, ...config }, frames[config.animacao], anchor, appear));
+}
+
+// Um personagem animado sobre a página: quadros em sequência num plano
+// apoiado nos pés, que gira em torno deles pra ficar de frente pra câmera.
+// Com o celular inclinado ele fica em pé; de frente pra página, deita sobre
+// ela em vez de virar um risco.
+function buildActor(config, frames, anchor, appear) {
+  const { image } = frames[0];
+  const height = config.altura;
+  const width = height * (image.width / image.height);
+  const flip = config.espelhar ? -1 : 1;
+
+  const stage = new THREE.Group();
+  anchor.group.add(stage);
+
+  if (config.sombra) {
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.5, 32),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false }),
+    );
+    shadow.scale.set(width * 0.9, height * 0.12, 1);
+    shadow.position.z = 0.002;
+    stage.add(shadow);
+  }
+
+  const material = new THREE.MeshBasicMaterial({
+    map: frames[0], transparent: true, alphaTest: 0.1, side: THREE.DoubleSide,
+  });
+  const geometry = new THREE.PlaneGeometry(width, height);
+  geometry.translate(0, height / 2, 0);
+  const sprite = new THREE.Mesh(geometry, material);
+  sprite.position.z = 0.003;
+  stage.add(sprite);
+
+  const walks = config.movimento === 'andar';
+  const cameraLocal = new THREE.Vector3();
+  let offset = walks ? -config.distancia : 0;
+  let dir = 1;
+  let frameTime = 0;
+
   return {
     update(dt) {
       if (!anchor.visible) return;
-      x += dir * WALK_SPEED * dt;
-      if (Math.abs(x) > WALK_LIMIT) {
-        x = Math.sign(x) * WALK_LIMIT;
-        dir = -dir;
+
+      if (walks) {
+        offset += dir * config.velocidade * dt;
+        if (Math.abs(offset) > config.distancia) {
+          offset = Math.sign(offset) * config.distancia;
+          dir = -dir;
+        }
       }
+      stage.position.set(config.x + offset, config.y, 0);
+
       frameTime += dt;
-      material.map = frames[Math.floor(frameTime * WALK_FPS) % WALK_FRAMES];
+      material.map = frames[Math.floor(frameTime * config.fps) % frames.length];
       // os quadros olham pra direita; andando pra esquerda, espelha
-      guri.scale.x = dir;
-      stage.position.set(x, WALK_Y, 0);
+      sprite.scale.x = dir * flip;
 
       // inclinação: 0 = deitado na página, 90° = em pé. Segue a direção da
       // câmera vista de lado (plano y-z da página), suavizada contra tremor
       cameraLocal.copy(mindar.camera.position);
       anchor.group.worldToLocal(cameraLocal);
-      const tilt = Math.atan2(-(cameraLocal.y - WALK_Y), cameraLocal.z);
+      const tilt = Math.atan2(-(cameraLocal.y - config.y), cameraLocal.z);
       const target = THREE.MathUtils.clamp(tilt, 0, MAX_TILT);
-      guri.rotation.x += (target - guri.rotation.x) * Math.min(1, dt * 8);
+      sprite.rotation.x += (target - sprite.rotation.x) * Math.min(1, dt * 8);
 
-      // ao achar a página, o Guri "salta" do papel
-      const t = Math.min(1, (performance.now() - poppedAt) / POP_MS);
-      const pop = t < 1 ? easeOutBack(t) : 1;
-      stage.scale.setScalar(Math.max(0.001, pop));
+      // ao achar a página, o personagem "salta" do papel
+      const t = Math.min(1, (performance.now() - appear.at) / POP_MS);
+      stage.scale.setScalar(Math.max(0.001, t < 1 ? easeOutBack(t) : 1));
     },
   };
 }
 
-function loadWalkFrames() {
+// Só as animações citadas no cenas.json, cada uma uma vez.
+async function loadAnimations() {
   const loader = new THREE.TextureLoader();
-  return Promise.all(Array.from({ length: WALK_FRAMES }, (_, i) => {
-    const n = String(i + 1).padStart(2, '0');
-    return loader.loadAsync(`./guri/walk_${n}.png`).then((texture) => {
+  const names = new Set(Object.values(scenes).flat().map((config) => config.animacao));
+  const loaded = {};
+  await Promise.all([...names].map(async (name) => {
+    const files = animations[name];
+    if (!files?.length) {
+      console.warn(`Animação "${name}" não encontrada em ar/animacoes/.`);
+      return;
+    }
+    loaded[name] = await Promise.all(files.map(async (file) => {
+      const texture = await loader.loadAsync(`./animacoes/${name}/${file}`);
       texture.colorSpace = THREE.SRGBColorSpace;
       return texture;
-    });
+    }));
   }));
+  return loaded;
+}
+
+function pageBorder(pageHeight) {
+  const top = pageHeight / 2;
+  return new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.5, -top, 0), new THREE.Vector3(0.5, -top, 0),
+      new THREE.Vector3(0.5, top, 0), new THREE.Vector3(-0.5, top, 0),
+    ]),
+    new THREE.LineBasicMaterial({ color: 0xe0006a }),
+  );
 }
 
 function easeOutBack(t) {
