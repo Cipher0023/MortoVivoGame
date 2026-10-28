@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "description": "Compilador dos alvos de AR (rode pelo compilar-alvos.sh)",
+  "type": "module",
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "mind-ar": "1.2.5"
+  },
+  "overrides": {
+    "canvas": "$canvas"
+  }
+}
