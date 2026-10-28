@@ -1,5 +1,5 @@
 #!/bin/sh
-# Publica o protótipo de AR em https://teste.cristiancobra.com.br/ar/
+# Publica o protótipo de AR em https://teste.cristiancobra.com.br/
 # Junta ar/prototipo/ com as animações (ar/animacoes/), o que aparece em cada
 # página (ar/cenas.json) e os códigos das fases do jogo (src/config/phases.js).
 #
@@ -42,9 +42,10 @@ for name in $(grep -o '"animacao" *: *"[^"]*"' ar/cenas.json | sed 's/.*"\([^"]*
 done
 [ "$missing" = 0 ] || exit 1
 
-rsync -a --delete --chmod=D755,F644 "$OUT/" cobra:/var/www/cristiancobra-teste/ar/
+# o protótipo ocupa o site inteiro: --delete apaga da raiz o que não veio daqui
+rsync -a --delete --chmod=D755,F644 "$OUT/" cobra:/var/www/cristiancobra-teste/
 
 for file in "" targets.mind cenas.json animacoes.json phases.js; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "https://teste.cristiancobra.com.br/ar/$file")
-  echo "$code  /ar/$file"
+  code=$(curl -s -o /dev/null -w "%{http_code}" "https://teste.cristiancobra.com.br/$file")
+  echo "$code  /$file"
 done

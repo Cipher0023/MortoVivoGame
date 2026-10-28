@@ -2,7 +2,7 @@
 
 O celular reconhece a página do livro, o Guri aparece caminhando sobre ela e
 um botão abre a fase correspondente no jogo. Por enquanto é um protótipo
-separado do jogo, publicado em https://teste.cristiancobra.com.br/ar/.
+separado do jogo, publicado na raiz de https://teste.cristiancobra.com.br/.
 
 Usa o [MindAR](https://github.com/hiukim/mind-ar-js) 1.2.5 com three.js,
 carregados de CDN.
@@ -39,11 +39,12 @@ carregados de CDN.
    sh ar/publicar-teste.sh
    ```
 
-   O script junta o protótipo com os códigos das fases (`src/config/phases.js`)
-   e os quadros do Guri (`public/assets/boy/`) e envia para o servidor.
+   O script junta o protótipo, as animações, o `cenas.json` e os códigos das
+   fases (`src/config/phases.js`) e envia tudo para a raiz do site, substituindo
+   o que estiver lá.
 
 ## Testar
 
-Abra https://teste.cristiancobra.com.br/ar/ no celular e aponte para a página,
+Abra https://teste.cristiancobra.com.br/ no celular e aponte para a página,
 impressa ou na tela de outro aparelho. Com `?debug=1`, o protótipo desenha a
 borda da página reconhecida, o que ajuda a ver se o encaixe treme.
