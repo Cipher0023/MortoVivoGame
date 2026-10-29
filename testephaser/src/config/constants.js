@@ -17,9 +17,25 @@ export const GAME_HEIGHT = 1080;
 // mais longe, menor tudo fica); raise: quantos px a grade do fundo sobe em
 // relação à fase (ver levels/layerGrid.js).
 export const BACKGROUND_LAYERS = {
-  near: { label: 'Fundo perto', factor: 0.45, depth: -10, scale: 0.75, raise: 8 },
-  far: { label: 'Fundo longe', factor: 0.2, depth: -20, scale: 0.5, raise: 16 },
+  near: { label: 'Fundo perto', factor: 0.45, depth: -10, scale: 0.75, raise: 6 },
+  far: { label: 'Fundo longe', factor: 0.2, depth: -20, scale: 0.5, raise: 10 },
 };
+
+// Cenário pintado (bg 1 e bg 2): imagens inteiras ATRÁS de tudo, inclusive
+// dos fundos em paralaxe do editor — camadas próprias, fora da grade.
+// Preenchem a tela, apoiadas embaixo, e se repetem na horizontal (a fase é
+// bem mais larga que a imagem). Arte em pixels de tela (1920x1080).
+// factor: fração da rolagem horizontal da fase (bem menor que a dos fundos
+// do editor: está mais longe). factorY: idem na vertical — 0 = parada; com a
+// câmera no ponto mais baixo da fase a imagem fica apoiada no pé da tela e,
+// subindo, ela desce um pouco (nunca abre vão embaixo). O bg 1 ocupa a tela
+// inteira de altura, então não mexe na vertical (abriria vão em cima).
+// raise: sobe a imagem essa fração da própria altura (o vão que abre
+// embaixo mostra o bg 1, atrás dela).
+export const SCENERY_LAYERS = [
+  { key: 'scenery-bg1', file: 'bg1-menino1.png', factor: 0.04, factorY: 0, depth: -40 },
+  { key: 'scenery-bg2', file: 'bg2-menino1.png', factor: 0.12, factorY: 0.12, raise: 0.2, depth: -30 },
+];
 
 export const CAMERA = {
   ZOOM: 2,
@@ -49,9 +65,6 @@ export const PHYSICS = {
   JUMP_VELOCITY: -560,
   BLOCK_PUSH_SPEED: 150,
   CLIMB_SPEED: 160,
-  // A Esqueleto pula 1,5 bloco (96px): sobe 1 bloco com folga, 2 não.
-  // Velocidade pra altura h: √(2·g·h).
-  SKELETON_JUMP_VELOCITY: -Math.sqrt(2 * 900 * 1.5 * 64),
 };
 
 // Esqueleto: sem a cabeça fica fina (passa em grades); pisada pelo Vivo,

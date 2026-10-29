@@ -1539,6 +1539,11 @@
       "row": 8
     },
     {
+      "type": "skeleton",
+      "col": 5,
+      "row": 8
+    },
+    {
       "type": "exit",
       "col": 82,
       "row": 8

@@ -20,6 +20,7 @@ import Ladder from '../interactables/Ladder.js';
 import CharacterManager from '../systems/CharacterManager.js';
 import FollowSystem from '../systems/FollowSystem.js';
 import { buildLevelFromData, disableInternalFaces } from '../levels/LevelLoader.js';
+import { createScenery } from '../levels/scenery.js';
 import { supportY, surfaceY, slopeVelocity, isSlopeKey } from '../levels/slopes.js';
 import { settingsFor, spriteArea, pieceCollision, piecePassThrough } from '../levels/assetSettings.js';
 import { ENTITY_SHAPES, entityCenter, createChannelMarker } from '../levels/entityCatalog.js';
@@ -80,6 +81,7 @@ export default class PlayScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
     this.cameras.main.setZoom(CAMERA.ZOOM);
 
+    createScenery(this);
     const level = buildLevelFromData(this, this.levelData);
     this.tileGroup = level.tileGroup;
     this.slopes = level.slopes;

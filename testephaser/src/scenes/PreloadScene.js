@@ -10,9 +10,12 @@ import {
   BLOCK_MANIFEST,
   SOUNDS_PATH,
   SOUND_MANIFEST,
+  SCENERY_PATH,
+  SKELETON_PATH,
+  SKELETON_WALK_MANIFEST,
 } from '../config/assetManifest.js';
 import { restoreMute, sfxKey } from '../audio/sfx.js';
-import { BALL, COLORS } from '../config/constants.js';
+import { BALL, COLORS, SCENERY_LAYERS } from '../config/constants.js';
 import { PHASES, findPhaseByScan } from '../config/phases.js';
 import { startPhase } from '../levels/startPhase.js';
 
@@ -49,8 +52,14 @@ export default class PreloadScene extends Phaser.Scene {
     for (const frame of BOY_WALK_MANIFEST) {
       this.load.image(frame.key, BOY_PATH + frame.file);
     }
+    for (const frame of SKELETON_WALK_MANIFEST) {
+      this.load.image(frame.key, SKELETON_PATH + frame.file);
+    }
     for (const block of BLOCK_MANIFEST) {
       this.load.image(block.key, BLOCKS_PATH + block.file);
+    }
+    for (const layer of SCENERY_LAYERS) {
+      this.load.image(layer.key, SCENERY_PATH + layer.file);
     }
     for (const sound of SOUND_MANIFEST) {
       sound.files.forEach((file, i) => this.load.audio(sfxKey(sound.id, i), SOUNDS_PATH + file));

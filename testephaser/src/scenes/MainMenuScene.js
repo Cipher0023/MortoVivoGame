@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../config/constants.js';
+import { GAME_WIDTH, GAME_HEIGHT } from '../config/constants.js';
 import { createButton } from '../ui/Button.js';
 import { addFullscreenButton } from '../ui/fullscreen.js';
 import { addSoundButton } from '../ui/soundButton.js';
 import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
 import { createBoyWalkAnimation } from '../entities/Living.js';
+import { createSkeletonWalkAnimation } from '../entities/Skeleton.js';
 import { setLandscapeRequired } from '../ui/orientation.js';
 
 // Primeira tela do site. JOGAR leva ao tutorial de como escanear os QR codes
@@ -72,7 +73,9 @@ export default class MainMenuScene extends Phaser.Scene {
     boy.setScale(260 / boy.height);
     if (this.anims.exists('boy-walk')) boy.play('boy-walk');
 
-    // Esqueleto ainda é um retângulo na fase: mesmo placeholder aqui
-    this.add.rectangle(GAME_WIDTH / 2 + 420, GROUND_TOP, 90, 150, COLORS.SKELETON).setOrigin(0.5, 1);
+    createSkeletonWalkAnimation(this);
+    const skeleton = this.add.sprite(GAME_WIDTH / 2 + 420, GROUND_TOP, 'skeleton-walk-1').setOrigin(0.5, 1);
+    skeleton.setScale(260 / skeleton.height);
+    if (this.anims.exists('skeleton-walk')) skeleton.play('skeleton-walk');
   }
 }

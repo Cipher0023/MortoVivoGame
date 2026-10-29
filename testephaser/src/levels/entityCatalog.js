@@ -103,7 +103,9 @@ export function createEntityPreview(scene, type, channel, size = 64) {
     boy.setScale((60 * scale) / boy.height);
     parts.push(boy);
   } else if (type === 'skeleton') {
-    parts.push(scene.add.rectangle(0, 6 * scale, 30 * scale, 50 * scale, COLORS.SKELETON));
+    const skeleton = scene.add.image(0, 0, 'skeleton-walk-1');
+    skeleton.setScale((60 * scale) / skeleton.height);
+    parts.push(skeleton);
   } else {
     const shape = ENTITY_SHAPES[type];
     // na paleta (size < 64), peça maior que a célula (inimigo alto) é

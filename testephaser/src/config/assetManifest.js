@@ -1,7 +1,9 @@
 export const TILES_PATH = `${import.meta.env.BASE_URL}assets/tiles/`;
 export const OBJECTS_PATH = `${import.meta.env.BASE_URL}assets/objetos/`;
 export const BOY_PATH = `${import.meta.env.BASE_URL}assets/boy/`;
+export const SKELETON_PATH = `${import.meta.env.BASE_URL}assets/menina/`;
 export const BLOCKS_PATH = `${import.meta.env.BASE_URL}assets/blocks/`;
+export const SCENERY_PATH = `${import.meta.env.BASE_URL}assets/cenario/`;
 export const SOUNDS_PATH = `${import.meta.env.BASE_URL}assets/sounds/`;
 
 // Sons gravados (ver audio/sfx.js), um id por ação do jogo. Origem e licença
@@ -103,6 +105,13 @@ export const BOY_WALK_MANIFEST = Array.from({ length: BOY_WALK_FRAME_COUNT }, (_
   const n = String(i + 1).padStart(2, '0');
   return { key: `boy-walk-${n}`, file: `walk_${n}.png` };
 });
+
+// Ciclo de caminhada da Esqueleto (a menina caveira): cav-run-1 a 4.
+export const SKELETON_WALK_FRAME_COUNT = 4;
+export const SKELETON_WALK_MANIFEST = Array.from({ length: SKELETON_WALK_FRAME_COUNT }, (_, i) => ({
+  key: `skeleton-walk-${i + 1}`,
+  file: `cav-run-${i + 1}.png`,
+}));
 
 export const TILE_MANIFEST = [
   { key: 'ground-1', file: 'ground-1.png' },
