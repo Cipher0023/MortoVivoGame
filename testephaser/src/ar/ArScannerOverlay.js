@@ -17,7 +17,10 @@ import './ar.css';
 // ?debug=1 desenha a borda da página reconhecida (pra ver se o encaixe treme).
 
 const DEBUG = new URLSearchParams(window.location.search).has('debug');
-// sem achar página nesse tempo, dá dicas e destaca a alternativa
+// Sem achar página: aos 8 s, "Nada por aqui... tente outra página!" (talvez
+// a página não tenha fase); aos 20 s, dica de luz e enquadramento, e a
+// alternativa dos desenhos vira o botão principal.
+const NOTHING_AFTER_MS = 8000;
 const HINT_AFTER_MS = 20000;
 
 const SAY_POINT = 'Aponte a câmera para uma página do livro.';
@@ -38,7 +41,7 @@ export default class ArScannerOverlay {
     this.mindar = null;
     this.pages = null;
     this.closed = false;
-    this.hintTimer = null;
+    this.searchTimers = [];
     this.lastSpoken = SAY_POINT;
     this.buildDom();
   }
@@ -168,7 +171,7 @@ export default class ArScannerOverlay {
     }
 
     this.say(SAY_POINT);
-    this.hintTimer = setTimeout(() => this.showHint(), HINT_AFTER_MS);
+    this.startSearchTimers();
   }
 
   // Liga a página `index` do targets.mind à sua fase e às animações dela.
@@ -182,7 +185,7 @@ export default class ArScannerOverlay {
     if (DEBUG) holder.group.add(pageBorder(target.height ?? 1));
 
     anchor.onTargetFound = () => {
-      clearTimeout(this.hintTimer);
+      this.clearSearchTimers();
       this.root.classList.remove('needs-help');
       // outra página na câmera: os personagens da anterior saem
       for (const page of this.pages) if (page.holder !== holder) page.holder.shown = false;
@@ -226,6 +229,26 @@ export default class ArScannerOverlay {
     this.playButton.hidden = true;
     this.onSound?.('back');
     this.say(SAY_POINT);
+    this.startSearchTimers();
+  }
+
+  // Avisos de quando nenhuma página aparece (ver NOTHING_AFTER_MS).
+  startSearchTimers() {
+    this.clearSearchTimers();
+    this.searchTimers = [
+      setTimeout(() => this.showNothingHere(), NOTHING_AFTER_MS),
+      setTimeout(() => this.showHint(), HINT_AFTER_MS),
+    ];
+  }
+
+  clearSearchTimers() {
+    this.searchTimers.forEach(clearTimeout);
+    this.searchTimers = [];
+  }
+
+  showNothingHere() {
+    if (this.closed || this.foundPhase) return;
+    this.say('Nada por aqui... tente outra página!');
   }
 
   showHint() {
@@ -261,7 +284,7 @@ export default class ArScannerOverlay {
 
   close() {
     this.closed = true;
-    clearTimeout(this.hintTimer);
+    this.clearSearchTimers();
     this.stopAr();
     this.root.remove();
   }
