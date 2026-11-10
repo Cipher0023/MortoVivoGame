@@ -125,7 +125,20 @@ export default class ArScannerOverlay {
       });
       this.pages = targets.map((target, index) => this.buildTarget(target, index, frames));
 
-      await this.mindar.start();
+      // O MindAR engole o erro da câmera (rejeita sem dizer o motivo): guarda
+      // o erro de verdade para mostrar a mensagem certa.
+      const media = navigator.mediaDevices;
+      const getUserMedia = media.getUserMedia;
+      media.getUserMedia = (...args) =>
+        getUserMedia.apply(media, args).catch((cameraError) => {
+          this.cameraError = cameraError;
+          throw cameraError;
+        });
+      try {
+        await this.mindar.start();
+      } finally {
+        media.getUserMedia = getUserMedia;
+      }
       if (this.closed) {
         this.stopAr();
         return;
@@ -144,22 +157,12 @@ export default class ArScannerOverlay {
         renderer.render(scene, camera);
       });
     } catch (error) {
-      console.error(error);
+      const cause = this.cameraError ?? error;
+      console.error(cause);
       if (this.closed) return;
       this.stopAr();
-      // o MindAR engole o erro da câmera (rejeita sem motivo): pergunta ao
-      // navegador se a permissão foi negada
       const permission = await navigator.permissions?.query({ name: 'camera' }).catch(() => null);
-      const denied =
-        error?.name === 'NotAllowedError' || error?.name === 'SecurityError' || permission?.state === 'denied';
-      const missing = error?.name === 'NotFoundError' || error?.name === 'OverconstrainedError';
-      this.fail(
-        denied
-          ? 'O navegador não deixou usar a câmera.'
-          : missing
-            ? 'Não encontramos uma câmera neste aparelho.'
-            : 'Não deu para abrir a câmera neste aparelho.'
-      );
+      this.fail(cameraErrorMessage(cause, permission?.state));
       return;
     }
 
@@ -251,4 +254,20 @@ export default class ArScannerOverlay {
     this.stopAr();
     this.root.remove();
   }
+}
+
+// Mensagem curta para cada motivo de a câmera não abrir. O código do erro vai
+// entre parênteses: ajuda quem for dar suporte a entender o que houve.
+function cameraErrorMessage(error, permissionState) {
+  const name = error?.name;
+  if (name === 'NotAllowedError' || name === 'SecurityError' || permissionState === 'denied') {
+    return 'O navegador não deixou usar a câmera. Libere a câmera nas configurações do navegador.';
+  }
+  if (name === 'NotReadableError' || name === 'AbortError') {
+    return 'A câmera está sendo usada por outro app ou outra aba. Feche e tente de novo.';
+  }
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+    return 'Não encontramos uma câmera neste aparelho.';
+  }
+  return `Não deu para abrir a câmera neste aparelho (${name || error?.message || 'erro desconhecido'}).`;
 }
