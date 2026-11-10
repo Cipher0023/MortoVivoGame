@@ -10,8 +10,12 @@ import { createMenuScenery } from './MainMenuScene.js';
 // Primeira tela do modo livro (ver config/mode.js): é o que abre o QR code
 // impresso no livro. Um botão só, COMEÇAR. Esse toque libera de uma vez o que
 // o navegador só libera com um gesto: som, voz, tela cheia e trava na
-// horizontal (Android) e a câmera. Funciona em pé; depois dela o app pede a
-// horizontal (no iPhone, que não trava a tela, aparece o aviso de girar).
+// horizontal (Android) e a câmera.
+//
+// O app é usado deitado desde a primeira tela. Com o celular em pé aparece o
+// aviso de girar. No Android o aviso também tem um botão Começar, que deita a
+// tela sozinho e já começa. No iPhone, que não deixa o site girar a tela, a
+// criança gira o aparelho.
 
 export default class BookStartScene extends Phaser.Scene {
   constructor() {
@@ -22,8 +26,8 @@ export default class BookStartScene extends Phaser.Scene {
     // O Phaser reaproveita a mesma instância da cena: sem zerar aqui, voltar
     // da câmera (botão ✕) deixava o Começar travado como "já começou".
     this.starting = false;
-    setLandscapeRequired(false);
-    this.events.once('shutdown', () => setLandscapeRequired(true));
+    setLandscapeRequired(true);
+    this.setupRotateButton();
     createMenuScenery(this);
 
     this.add
@@ -64,6 +68,30 @@ export default class BookStartScene extends Phaser.Scene {
         playSfx(this, 'confirm');
         this.start();
       },
+    });
+  }
+
+  // Botão Começar dentro do aviso de girar, só onde dá para travar a tela.
+  setupRotateButton() {
+    const button = document.getElementById('rotate-start');
+    const canLock = Boolean(document.documentElement.requestFullscreen && window.screen.orientation?.lock);
+    if (!button || !canLock) return;
+    const onClick = async () => {
+      try {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        await window.screen.orientation.lock('landscape');
+      } catch {
+        // não deixou: fica o aviso, e a criança gira o aparelho
+        return;
+      }
+      playSfx(this, 'confirm');
+      this.start();
+    };
+    button.hidden = false;
+    button.addEventListener('click', onClick);
+    this.events.once('shutdown', () => {
+      button.hidden = true;
+      button.removeEventListener('click', onClick);
     });
   }
 
