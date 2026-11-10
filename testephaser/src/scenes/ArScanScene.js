@@ -7,6 +7,7 @@ import { startPhase } from '../levels/startPhase.js';
 import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
 import { speak } from '../ui/speech.js';
+import { isUnlocked, markFound } from '../config/progress.js';
 
 // Modo livro: a câmera de realidade aumentada (ArScannerOverlay, por cima do
 // canvas). Achou a página → personagens animados → "Jogar" → a fase abre aqui
@@ -66,18 +67,34 @@ export default class ArScanScene extends Phaser.Scene {
 
   play(phase) {
     this.closeOverlay();
+    markFound(phase.number);
+    if (!isUnlocked(phase)) {
+      // pelo código de desenhos (a câmera já esconde o botão de jogar)
+      playSfx(this, 'comingSoon');
+      this.showMessage(
+        'Fase escondida!',
+        `Você achou a ${phase.title}.\nTermine a Fase ${phase.number - 1} para jogar.`,
+        `Você achou uma fase escondida! Termine a Fase ${phase.number - 1} para jogar.`
+      );
+      return;
+    }
     if (startPhase(this, phase)) {
       playSfx(this, 'confirm');
       return;
     }
     playSfx(this, 'comingSoon');
-    this.showComingSoon(phase);
+    this.showMessage(
+      phase.title,
+      'Essa fase ainda está em construção.\nVolte em breve!',
+      `A ${phase.title} ainda está em construção. Volte em breve!`
+    );
   }
 
-  showComingSoon(phase) {
+  // Tela de aviso (fase trancada ou em construção) com "escanear outra".
+  showMessage(title, text, spoken) {
     this.children.removeAll(true);
     this.add
-      .text(GAME_WIDTH / 2, 360, phase.title, {
+      .text(GAME_WIDTH / 2, 360, title, {
         fontFamily: 'monospace',
         fontSize: '96px',
         fontStyle: 'bold',
@@ -85,7 +102,7 @@ export default class ArScanScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.add
-      .text(GAME_WIDTH / 2, 490, 'Essa fase ainda está em construção.\nVolte em breve!', {
+      .text(GAME_WIDTH / 2, 490, text, {
         fontFamily: 'monospace',
         fontSize: '44px',
         color: '#ffffff',
@@ -93,7 +110,7 @@ export default class ArScanScene extends Phaser.Scene {
         lineSpacing: 10,
       })
       .setOrigin(0.5);
-    speak(`A ${phase.title} ainda está em construção. Volte em breve!`);
+    speak(spoken);
 
     const again = () => this.scene.restart();
     createButton(this, GAME_WIDTH / 2, 760, 'ESCANEAR OUTRA PÁGINA', again, { width: 820 });

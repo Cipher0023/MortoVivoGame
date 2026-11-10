@@ -10,8 +10,10 @@ fazer o próprio livro.
 
 ## O fluxo da criança
 
-1. **Um único QR code no livro** (contracapa ou guarda) abre
-   `https://mortovivo.cristiancobra.com.br/livro` na câmera normal do celular.
+1. **Um único QR code no livro** (capa ou contracapa) abre
+   `https://mortovivo.cristiancobra.com.br/livro-ar` na câmera normal do
+   celular. Por enquanto esse endereço só redireciona para
+   `https://mortovivo.cristiancobra.com.br`.
 2. **Tela "Começar".** É um botão grande só. O toque libera de uma vez o som, a
    voz, a tela cheia com o celular deitado (no Android) e a câmera.
 3. **Câmera de realidade aumentada.** A criança aponta para qualquer página com
@@ -19,6 +21,13 @@ fazer o próprio livro.
    aparece o botão **▶ Jogar a Fase N**. Uma voz lê as instruções.
 4. **A fase abre na hora, sem recarregar a página.** A câmera desliga.
 5. **Fase concluída:** o botão **Escanear outra página** volta para a câmera.
+
+As fases liberam **em sequência**: as fases 1 e 2 são tutoriais e a
+dificuldade é progressiva. Se a criança escanear a página de uma fase de mais
+adiante, a fase fica marcada como encontrada e aparece "Você achou uma fase
+escondida! Termine a fase anterior para jogar". O progresso fica salvo no
+próprio celular, sem cadastro. Para testar do zero, abra o site com
+`?progresso=zerar`.
 
 Para não ter que girar o celular no meio do caminho, o app é usado deitado do
 começo ao fim. No iPhone, que não deixa o site travar a tela, aparece o aviso
@@ -51,12 +60,13 @@ app foi pensado para elas:
 ## Sem o livro, não tem jogo
 
 No modo livro (o padrão) não existe menu nem lista de fases. A fase só abre
-pela página do livro, seja pela câmera ou pelos desenhos impressos nela.
+pela página do livro, seja pela câmera ou pelos desenhos impressos nela, e só
+depois de concluída a anterior.
 
 ### Modo jogo (oculto)
 
 O menu, o tutorial, o leitor de QR, os links `?fase=<código>` e o editor
-continuam no código, no **modo jogo**. Ele serve para desenvolver e para uma
+continuam no código, no **modo jogo**, com todas as fases liberadas. Ele serve para desenvolver e para uma
 futura versão "jogo" do projeto:
 
 - **Neste aparelho:** abra o site com `?modo=jogo`. O navegador lembra; para
@@ -65,12 +75,13 @@ futura versão "jogo" do projeto:
   jogo como padrão.
 - O editor continua abrindo direto por `?scene=editor`.
 
-## Por que o endereço é fixo (/livro)
+## Por que o endereço é fixo (/livro-ar)
 
 O endereço impresso no QR não pode mudar nunca: o livro já estará na mão das
-crianças. Por isso o QR aponta para `/livro`, e não para a raiz. Se um dia a
+crianças. Por isso o QR aponta para `/livro-ar`, e não para a raiz. Por
+enquanto, `/livro-ar` só redireciona para a raiz. Se um dia a
 raiz do site virar outra coisa, por exemplo um jogo maior, basta mudar o que
-`/livro` abre (`testephaser/public/livro/index.html`).
+`/livro-ar` abre (`testephaser/public/livro-ar/index.html`).
 
 O site fica num subdomínio de um servidor que já existe por outros motivos.
 Assim, depois que o projeto e a verba acabarem, ele continua no ar sem custo de
@@ -118,7 +129,7 @@ Tudo o que muda de um livro para outro fica em `testephaser/ar/` e em
 5. **Material impresso.** Gere o QR do livro e os desenhos de cada página:
 
    ```bash
-   npm run simbolos -- --url https://seu-endereco/livro
+   npm run simbolos -- --url https://seu-endereco/livro-ar
    ```
 
    Os arquivos saem em `testephaser/impressos/`. O QR vai na contracapa e os

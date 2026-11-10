@@ -2,6 +2,7 @@ import { PHASES } from '../config/phases.js';
 import { symbolSvg } from '../config/symbols.js';
 import { speak, canSpeak } from '../ui/speech.js';
 import { targetsUrl, targets, scenes, animations } from './arContent.js';
+import { isUnlocked, markFound } from '../config/progress.js';
 import './ar.css';
 
 // Câmera de realidade aumentada (MindAR + three.js): camada HTML por cima do
@@ -189,13 +190,23 @@ export default class ArScannerOverlay {
       if (!holder.shown) appear.at = performance.now();
       holder.shown = true;
       if (!phase) return;
+      markFound(phase.number);
+      const unlocked = isUnlocked(phase);
       if (this.foundPhase !== phase) {
         this.onSound?.('scanOk');
-        this.say(`Você achou a ${phase.title}! Toque em Jogar.`, { status: `Você achou a ${phase.title}!` });
+        if (unlocked) {
+          this.say(`Você achou a ${phase.title}! Toque em Jogar.`, { status: `Você achou a ${phase.title}!` });
+        } else {
+          // fase de mais adiante: fica "encontrada", mas só abre depois da anterior
+          this.say(
+            `Você achou uma fase escondida! Termine a Fase ${phase.number - 1} para jogar.`,
+            { status: `Fase escondida! Termine a Fase ${phase.number - 1} para jogar.` }
+          );
+        }
       }
       this.foundPhase = phase;
       this.playButton.textContent = `▶ Jogar a ${phase.title}`;
-      this.playButton.hidden = false;
+      this.playButton.hidden = !unlocked;
     };
     // a página saiu da tela: personagens e botão de jogar ficam (tremer a
     // mão não pode tirar a fase da criança); só somem com toque na tela ou X

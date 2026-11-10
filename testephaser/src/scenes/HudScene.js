@@ -88,7 +88,14 @@ export default class HudScene extends Phaser.Scene {
         ? ['PRÓXIMA FASE', () => play.leaveTo('Scan'), 460]
         : ['ESCANEAR OUTRA PÁGINA', () => play.leaveTo(scanSceneKey()), 820];
     createButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, label, next, { width });
-    if (!this.isEditorTest && !isGameMode()) speak('Fase concluída! Muito bem! Escaneie outra página do livro.');
+    if (!this.isEditorTest && !isGameMode()) {
+      const number = play.phase?.number;
+      speak(
+        number
+          ? `Fase concluída! Muito bem! Agora procure a Fase ${number + 1} no livro.`
+          : 'Fase concluída! Muito bem! Escaneie outra página do livro.'
+      );
+    }
     // controle: A confirma o botão
     onPadMenu(this, {
       onConfirm: () => {

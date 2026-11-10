@@ -28,6 +28,7 @@ import { isTouchEnabled } from './TouchControlsScene.js';
 import { playSfx } from '../audio/sfx.js';
 import { PadReader, PAD } from '../input/gamepad.js';
 import { isGameMode, scanSceneKey } from '../config/mode.js';
+import { markCompleted } from '../config/progress.js';
 
 // Joga qualquer fase no formato do editor (tiles + decorações + peças de
 // mecânica, ver entityCatalog). As fases oficiais (src/levels/data) e o
@@ -1447,6 +1448,8 @@ export default class PlayScene extends Phaser.Scene {
     if (this.levelComplete) return;
     this.levelComplete = true;
     this.physics.pause();
+    // libera a próxima fase (no teste do editor não há fase do livro)
+    if (this.phase && !this.returnTo) markCompleted(this.phase.number);
     playSfx(this, 'win');
     this.hud.showLevelComplete();
   }

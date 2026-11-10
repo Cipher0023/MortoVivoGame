@@ -21,7 +21,7 @@ rsync -az --delete --chmod=D755,F644 dist/ "$DESTINO"
 
 # confere se o essencial responde (falha o script se algo não abrir)
 erro=0
-for caminho in "" livro/ "$(cd dist && ls assets/*.mind | head -1)"; do
+for caminho in "" livro-ar/ "$(cd dist && ls assets/*.mind | head -1)"; do
   code=$(curl -s -o /dev/null -w "%{http_code}" "$SITE/$caminho")
   echo "$code  /$caminho"
   [ "$code" = 200 ] || erro=1

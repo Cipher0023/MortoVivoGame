@@ -4,10 +4,11 @@
 //                        src/config/phases.js). Vão num canto da página da
 //                        fase: são a entrada de quem não consegue usar a câmera.
 //   qr-livro.svg/.png    o QR code único do livro (contracapa ou guarda). Abre
-//                        o endereço fixo /livro, que inicia a câmera.
+//                        o endereço fixo /livro-ar (por enquanto ele só
+//                        redireciona para a raiz do site, que abre o app).
 //
 // Uso:   npm run simbolos
-//        npm run simbolos -- --url https://outro-endereco/livro
+//        npm run simbolos -- --url https://outro-endereco/livro-ar
 //
 // Tamanho de impressão sugerido para os desenhos: pelo menos 1,5 cm de altura
 // cada, sobre fundo claro, fora da ilustração principal (para não atrapalhar
@@ -20,7 +21,7 @@ import { PHASES } from '../src/config/phases.js';
 import { SYMBOLS } from '../src/config/symbols.js';
 
 const OUT_DIR = new URL('../impressos/', import.meta.url);
-const DEFAULT_URL = 'https://mortovivo.cristiancobra.com.br/livro';
+const DEFAULT_URL = 'https://mortovivo.cristiancobra.com.br/livro-ar';
 
 const urlIndex = process.argv.indexOf('--url');
 const bookUrl = urlIndex !== -1 ? process.argv[urlIndex + 1] : DEFAULT_URL;
