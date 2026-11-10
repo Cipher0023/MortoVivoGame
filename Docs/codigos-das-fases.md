@@ -1,5 +1,20 @@
 # Códigos das fases — Morto Vivo game
 
+> **Modo livro (padrão do site):** a criança entra pela câmera de realidade
+> aumentada, que reconhece a própria página, ou pelo **código de desenhos**
+> impresso num canto da página (tabela abaixo). Os QR codes por
+> fase e o código digitado continuam valendo no **modo jogo** (`?modo=jogo`).
+> Ver [livro-com-realidade-aumentada.md](livro-com-realidade-aumentada.md).
+>
+> | Fase | Desenhos (nesta ordem) | Arquivo para impressão |
+> |------|------------------------|------------------------|
+> | 1 | Sol, Coração, Folha | `testephaser/impressos/simbolos-fase-1.svg` |
+> | 2 | Lua, Estrela, Gota | `testephaser/impressos/simbolos-fase-2.svg` |
+> | 3 | Casa, Flor, Sol | `testephaser/impressos/simbolos-fase-3.svg` |
+> | 4 | Coração, Lua, Casa | `testephaser/impressos/simbolos-fase-4.svg` |
+>
+> O QR code único do livro está em `testephaser/impressos/qr-livro.svg`.
+
 Cada fase do livro é aberta por um QR code impresso na página da fase. O QR code
 carrega o **código** abaixo. O mesmo código também pode ser **digitado à mão** no
 jogo (botão "Digitar código" no leitor de QR), para quem não consegue usar a câmera.
@@ -58,5 +73,5 @@ Com `npm run dev` rodando:
 
 - `http://localhost:5173/?fase=1` abre a Fase 1 direto (vale `1` a `4`).
 - `http://localhost:5173/?fase=MORTOVIVO-FASE1-R7K2` abre pelo código completo
-  (funciona também no site publicado).
+  (no site publicado, só no modo jogo).
 - `http://localhost:5173/?scene=editor` abre o editor.

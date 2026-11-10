@@ -7,8 +7,14 @@ import HudScene from './scenes/HudScene.js';
 import MainMenuScene from './scenes/MainMenuScene.js';
 import TutorialScene from './scenes/TutorialScene.js';
 import ScanScene from './scenes/ScanScene.js';
+import BookStartScene from './scenes/BookStartScene.js';
+import ArScanScene from './scenes/ArScanScene.js';
 import { GAME_WIDTH, GAME_HEIGHT, PHYSICS } from './config/constants.js';
 import { initOrientation } from './ui/orientation.js';
+import { initMode } from './config/mode.js';
+
+// modo livro (padrão) ou modo jogo (?modo=jogo): ver config/mode.js
+initMode();
 
 const config = {
   type: Phaser.AUTO,
@@ -43,6 +49,8 @@ const config = {
   // Overlays (Hud, TouchControls) depois da fase na lista = desenhados por cima.
   scene: [
     PreloadScene,
+    BookStartScene,
+    ArScanScene,
     MainMenuScene,
     TutorialScene,
     ScanScene,

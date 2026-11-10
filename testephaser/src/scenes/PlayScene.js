@@ -27,6 +27,7 @@ import { ENTITY_SHAPES, entityCenter, createChannelMarker } from '../levels/enti
 import { isTouchEnabled } from './TouchControlsScene.js';
 import { playSfx } from '../audio/sfx.js';
 import { PadReader, PAD } from '../input/gamepad.js';
+import { isGameMode, scanSceneKey } from '../config/mode.js';
 
 // Joga qualquer fase no formato do editor (tiles + decorações + peças de
 // mecânica, ver entityCatalog). As fases oficiais (src/levels/data) e o
@@ -507,10 +508,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   // Botão Menu/Voltar: no teste do editor volta pro editor (que ficou
-  // dormindo com tudo como estava); no jogo normal vai pro menu.
+  // dormindo com tudo como estava); no modo jogo vai pro menu; no modo livro
+  // volta pra câmera, pra escanear outra página.
   exitLevel() {
     if (!this.returnTo) {
-      this.leaveTo('MainMenu');
+      this.leaveTo(isGameMode() ? 'MainMenu' : scanSceneKey());
       return;
     }
     this.scene.stop('TouchControls');

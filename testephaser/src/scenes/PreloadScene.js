@@ -18,6 +18,7 @@ import { restoreMute, sfxKey } from '../audio/sfx.js';
 import { BALL, COLORS, SCENERY_LAYERS } from '../config/constants.js';
 import { PHASES, findPhaseByScan } from '../config/phases.js';
 import { startPhase } from '../levels/startPhase.js';
+import { homeSceneKey, isGameMode } from '../config/mode.js';
 
 // Bola desenhada (ainda sem arte): branca com gomos escuros, pra dar pra ver
 // ela girando ao rolar. Usada no jogo e no editor.
@@ -76,14 +77,16 @@ export default class PreloadScene extends Phaser.Scene {
       return;
     }
 
-    // Link direto pra fase (?fase=<código>): é o que um QR code com URL
-    // abre pela câmera nativa do celular. Em desenvolvimento, ?fase=1..4
+    // Link direto pra fase (?fase=<código>), só no modo jogo: no modo livro
+    // a fase só abre pela página do livro. Em desenvolvimento, ?fase=1..4
     // também vale, pra testar sem escanear.
-    const fromLink = findPhaseByScan(window.location.href);
-    const devNumber = import.meta.env.DEV ? Number(params.get('fase')) : NaN;
-    const phase = fromLink ?? PHASES.find((p) => p.number === devNumber);
-    if (phase && startPhase(this, phase)) return;
+    if (isGameMode() || import.meta.env.DEV) {
+      const fromLink = findPhaseByScan(window.location.href);
+      const devNumber = import.meta.env.DEV ? Number(params.get('fase')) : NaN;
+      const phase = fromLink ?? PHASES.find((p) => p.number === devNumber);
+      if (phase && startPhase(this, phase)) return;
+    }
 
-    this.scene.start('MainMenu');
+    this.scene.start(homeSceneKey());
   }
 }

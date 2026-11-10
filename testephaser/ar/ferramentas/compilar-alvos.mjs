@@ -1,5 +1,5 @@
 // Compila as páginas de ar/paginas/ no arquivo de alvos do MindAR
-// (ar/prototipo/targets.mind) e desenha, para cada página, o mapa dos pontos
+// (ar/alvos/targets.mind) e desenha, para cada página, o mapa dos pontos
 // que o celular usa para reconhecê-la (rosa) e acompanhá-la (azul).
 // Rode pelo compilar-alvos.sh, que monta o Node com as dependências.
 
@@ -8,8 +8,8 @@ import { loadImage, createCanvas } from 'canvas';
 import { mkdirSync, readdirSync, writeFileSync } from 'fs';
 
 const PAGES_DIR = 'ar/paginas';
-const TARGETS_FILE = 'ar/prototipo/targets.mind';
-const LIST_FILE = 'ar/prototipo/alvos.json';
+const TARGETS_FILE = 'ar/alvos/targets.mind';
+const LIST_FILE = 'ar/alvos/alvos.json';
 const MAPS_DIR = 'ar/ferramentas/.cache/mapas';
 // O MindAR reduz a imagem por dentro de qualquer jeito; acima disso só deixa
 // a compilação lenta e o arquivo maior.

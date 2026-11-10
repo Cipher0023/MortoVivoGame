@@ -1,5 +1,5 @@
 #!/bin/sh
-# Compila ar/paginas/ em ar/prototipo/targets.mind (ver compilar-alvos.mjs).
+# Compila ar/paginas/ em ar/alvos/targets.mind (ver compilar-alvos.mjs).
 # Roda no Docker, sem precisar de Node na máquina. A 1ª vez instala as
 # dependências em ar/ferramentas/node_modules/ (fora do git).
 #
