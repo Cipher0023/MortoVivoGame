@@ -1,0 +1,14 @@
+{
+  "fase1": [
+    {
+      "animacao": "guri-andando",
+      "movimento": "andar",
+      "altura": 0.36,
+      "x": 0,
+      "y": -0.28,
+      "fps": 14,
+      "distancia": 0.32,
+      "velocidade": 0.16
+    }
+  ]
+}
