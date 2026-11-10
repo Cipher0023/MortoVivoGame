@@ -19,6 +19,9 @@ export default class BookStartScene extends Phaser.Scene {
   }
 
   create() {
+    // O Phaser reaproveita a mesma instância da cena: sem zerar aqui, voltar
+    // da câmera (botão ✕) deixava o Começar travado como "já começou".
+    this.starting = false;
     setLandscapeRequired(false);
     this.events.once('shutdown', () => setLandscapeRequired(true));
     createMenuScenery(this);
