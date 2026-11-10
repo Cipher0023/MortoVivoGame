@@ -2,5 +2,13 @@
   {
     "phase": 1,
     "height": 1
+  },
+  {
+    "phase": 2,
+    "height": 1
+  },
+  {
+    "phase": 3,
+    "height": 1.024
   }
 ]

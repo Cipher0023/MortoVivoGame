@@ -10,5 +10,39 @@
       "distancia": 0.32,
       "velocidade": 0.16
     }
+  ],
+  "fase2": [
+    {
+      "animacao": "caveirinha-andando",
+      "movimento": "andar",
+      "altura": 0.34,
+      "x": 0,
+      "y": -0.3,
+      "fps": 8,
+      "distancia": 0.3,
+      "velocidade": 0.14
+    }
+  ],
+  "fase3": [
+    {
+      "animacao": "guri-andando",
+      "movimento": "andar",
+      "altura": 0.32,
+      "x": -0.2,
+      "y": -0.3,
+      "fps": 14,
+      "distancia": 0.14,
+      "velocidade": 0.12
+    },
+    {
+      "animacao": "caveirinha-andando",
+      "movimento": "andar",
+      "altura": 0.3,
+      "x": 0.2,
+      "y": -0.3,
+      "fps": 8,
+      "distancia": 0.14,
+      "velocidade": 0.12
+    }
   ]
 }

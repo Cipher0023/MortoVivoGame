@@ -21,9 +21,9 @@ jogo (botão "Digitar código" no leitor de QR), para quem não consegue usar a 
 
 | Fase | O que abre | Código | QR code | Situação |
 |------|------------|--------|---------|----------|
-| 1 | Fase 1 | `MORTOVIVO-FASE1-R7K2` | `testephaser/qrcodes/fase-1.svg` | Jogável |
-| 2 | Fase 2 | `MORTOVIVO-FASE2-M4X9` | `testephaser/qrcodes/fase-2.svg` | Em construção |
-| 3 | Fase 3 | `MORTOVIVO-FASE3-T8B5` | `testephaser/qrcodes/fase-3.svg` | Em construção |
+| 1 | Fase 1 | `MORTOVIVO-FASE1-R7K2` | `testephaser/qrcodes/fase-1.svg` | Jogável (só com o Guri, para teste) |
+| 2 | Fase 2 | `MORTOVIVO-FASE2-M4X9` | `testephaser/qrcodes/fase-2.svg` | Jogável (provisória: cópia da Fase 1 só com a Caveirinha) |
+| 3 | Fase 3 | `MORTOVIVO-FASE3-T8B5` | `testephaser/qrcodes/fase-3.svg` | Jogável (provisória: cópia da Fase 1 com os dois) |
 | 4 | Fase 4 | `MORTOVIVO-FASE4-Q3W6` | `testephaser/qrcodes/fase-4.svg` | Em construção |
 | 5 | Editor de fases (computador) | `MORTOVIVO-FASE5-E2D8` | `testephaser/qrcodes/fase-5.svg` | Pronto |
 
