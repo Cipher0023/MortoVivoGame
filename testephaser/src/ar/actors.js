@@ -45,11 +45,57 @@ export async function loadAnimations(scenes, animations) {
   return loaded;
 }
 
+// Onde os personagens de uma página ficam. Não é o grupo da âncora do
+// MindAR: quando a página sai da tela, o MindAR esconde a âncora e apaga a
+// posição dela. Este grupo guarda a última posição, então os personagens
+// continuam na tela até a criança tocar na tela, no X ou em Jogar.
+// `shown`: personagens na tela (achou a página e ninguém dispensou).
+export function createHolder(scene) {
+  const group = new THREE.Group();
+  group.matrixAutoUpdate = false;
+  group.visible = false;
+  scene.add(group);
+  return {
+    group,
+    shown: false,
+    get visible() {
+      return this.shown;
+    },
+  };
+}
+
+// onde o centro da página para, em larguras de página acima do centro da tela
+const REST_Y = 0.25;
+const position = new THREE.Vector3();
+const rotation = new THREE.Quaternion();
+const scale = new THREE.Vector3();
+
+// A cada quadro: com a página na câmera, o grupo segue a página; sem ela,
+// fica onde estava e desliza aos poucos pro centro da tela (mesma distância,
+// mesmo tamanho), pra não ficar cortado na borda de onde a página saiu.
+export function updateHolder(holder, anchor, dt) {
+  const { group } = holder;
+  if (anchor.visible) {
+    group.matrix.copy(anchor.group.matrix);
+  } else if (holder.shown) {
+    group.matrix.decompose(position, rotation, scale);
+    const k = Math.min(1, dt * 2.5);
+    // um pouco acima do centro: os personagens ficam na parte de baixo da
+    // página (y negativo) e não podem ficar atrás do botão de jogar.
+    // scale.x = largura da página na cena
+    position.x += (0 - position.x) * k;
+    position.y += (REST_Y * scale.x - position.y) * k;
+    group.matrix.compose(position, rotation, scale);
+  }
+  group.visible = holder.shown;
+}
+
 // Um personagem: quadros em sequência num plano apoiado nos pés, que gira em
 // torno deles pra ficar de frente pra câmera. Com o celular inclinado ele fica
 // em pé; de frente pra página, deita sobre ela em vez de virar um risco.
-// `appear.at`: quando a página foi achada (o personagem "salta" do papel).
-export function buildActor(rawConfig, frames, anchor, camera, appear) {
+// `holder`: ver createHolder(). `appear.at`: quando a página foi achada (o
+// personagem "salta" do papel).
+export function buildActor(rawConfig, frames, holder, camera, appear) {
   const config = { ...ACTOR_DEFAULTS, ...rawConfig };
   const { image } = frames[0];
   const height = config.altura;
@@ -57,7 +103,7 @@ export function buildActor(rawConfig, frames, anchor, camera, appear) {
   const flip = config.espelhar ? -1 : 1;
 
   const stage = new THREE.Group();
-  anchor.group.add(stage);
+  holder.group.add(stage);
 
   if (config.sombra) {
     const shadow = new THREE.Mesh(
@@ -89,7 +135,7 @@ export function buildActor(rawConfig, frames, anchor, camera, appear) {
 
   return {
     update(dt) {
-      if (!anchor.visible) return;
+      if (!holder.visible) return;
 
       if (walks) {
         offset += dir * config.velocidade * dt;
@@ -110,7 +156,7 @@ export function buildActor(rawConfig, frames, anchor, camera, appear) {
       // Ângulo negativo (câmera além do topo da página) fica em 0: girar
       // pro outro lado enfiaria o personagem dentro do papel.
       cameraLocal.copy(camera.position);
-      anchor.group.worldToLocal(cameraLocal);
+      holder.group.worldToLocal(cameraLocal);
       const tilt = Math.atan2(-(cameraLocal.y - config.y), cameraLocal.z);
       const target = THREE.MathUtils.clamp(tilt, 0, MAX_TILT);
       sprite.rotation.x += (target - sprite.rotation.x) * Math.min(1, dt * 8);

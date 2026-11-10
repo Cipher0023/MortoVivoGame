@@ -35,6 +35,7 @@ export default class ArScannerOverlay {
     this.onBack = onBack;
     this.onSound = onSound;
     this.mindar = null;
+    this.pages = null;
     this.closed = false;
     this.hintTimer = null;
     this.lastSpoken = SAY_POINT;
@@ -77,6 +78,11 @@ export default class ArScannerOverlay {
     this.playButton.addEventListener('click', () => {
       if (this.foundPhase) this.onPlay(this.foundPhase);
     });
+    // Tocar na tela (fora dos botões) dispensa os personagens e volta a
+    // procurar página. Eles não somem sozinhos quando a página sai da tela.
+    this.root.addEventListener('click', (event) => {
+      if (!event.target.closest('button')) this.dismiss();
+    });
     // o body tem touch-action: none (pro jogo); os botões precisam de toque normal
     this.root.addEventListener('touchstart', (event) => event.stopPropagation(), { passive: true });
   }
@@ -117,7 +123,7 @@ export default class ArScannerOverlay {
         filterMinCF: 0.0001,
         filterBeta: 0.001,
       });
-      const actors = targets.flatMap((target, index) => this.buildTarget(target, index, frames));
+      this.pages = targets.map((target, index) => this.buildTarget(target, index, frames));
 
       await this.mindar.start();
       if (this.closed) {
@@ -126,11 +132,15 @@ export default class ArScannerOverlay {
       }
 
       const { renderer, scene, camera } = this.mindar;
+      const { updateHolder } = this.actorsModule;
       let last = performance.now();
       renderer.setAnimationLoop((now) => {
         const dt = Math.min((now - last) / 1000, 0.1);
         last = now;
-        for (const actor of actors) actor.update(dt);
+        for (const page of this.pages) {
+          updateHolder(page.holder, page.anchor, dt);
+          for (const actor of page.actors) actor.update(dt);
+        }
         renderer.render(scene, camera);
       });
     } catch (error) {
@@ -163,13 +173,18 @@ export default class ArScannerOverlay {
     const anchor = this.mindar.addAnchor(index);
     const appear = { at: 0 };
 
-    const { buildActor, pageBorder } = this.actorsModule;
-    if (DEBUG) anchor.group.add(pageBorder(target.height ?? 1));
+    const { buildActor, createHolder, pageBorder } = this.actorsModule;
+    const holder = createHolder(this.mindar.scene);
+    if (DEBUG) holder.group.add(pageBorder(target.height ?? 1));
 
     anchor.onTargetFound = () => {
-      appear.at = performance.now();
       clearTimeout(this.hintTimer);
       this.root.classList.remove('needs-help');
+      // outra página na câmera: os personagens da anterior saem
+      for (const page of this.pages) if (page.holder !== holder) page.holder.shown = false;
+      // só "salta" do papel na 1ª vez; reencontrar a página não reinicia
+      if (!holder.shown) appear.at = performance.now();
+      holder.shown = true;
       if (!phase) return;
       if (this.foundPhase !== phase) {
         this.onSound?.('scanOk');
@@ -179,15 +194,24 @@ export default class ArScannerOverlay {
       this.playButton.textContent = `▶ Jogar a ${phase.title}`;
       this.playButton.hidden = false;
     };
-    // o botão de jogar fica: tremer a mão não pode tirar a fase da criança
-    anchor.onTargetLost = () => {
-      if (!this.foundPhase) this.status.textContent = SAY_POINT;
-    };
+    // a página saiu da tela: personagens e botão de jogar ficam (tremer a
+    // mão não pode tirar a fase da criança); só somem com toque na tela ou X
 
     const configs = scenes[`fase${target.phase}`] ?? [];
-    return configs
+    const actors = configs
       .filter((config) => frames[config.animacao])
-      .map((config) => buildActor(config, frames[config.animacao], anchor, this.mindar.camera, appear));
+      .map((config) => buildActor(config, frames[config.animacao], holder, this.mindar.camera, appear));
+    return { anchor, holder, actors };
+  }
+
+  // Toque na tela: tira os personagens e o botão de jogar, volta a procurar.
+  dismiss() {
+    if (!this.foundPhase || !this.pages) return;
+    for (const page of this.pages) page.holder.shown = false;
+    this.foundPhase = null;
+    this.playButton.hidden = true;
+    this.onSound?.('back');
+    this.say(SAY_POINT);
   }
 
   showHint() {
