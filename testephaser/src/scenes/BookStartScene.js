@@ -6,6 +6,7 @@ import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
 import { setLandscapeRequired } from '../ui/orientation.js';
 import { createMenuScenery } from './MainMenuScene.js';
+import { addLogo, textStyle, CSS } from '../ui/theme.js';
 
 // Primeira tela do modo livro (ver config/mode.js): é o que abre o QR code
 // impresso no livro. Um botão só, COMEÇAR. Esse toque libera de uma vez o que
@@ -31,24 +32,11 @@ export default class BookStartScene extends Phaser.Scene {
     createMenuScenery(this);
 
     this.add
-      .text(GAME_WIDTH / 2, 210, 'Morto Vivo', {
-        fontFamily: 'monospace',
-        fontSize: '140px',
-        fontStyle: 'bold',
-        color: '#ffe066',
-        stroke: '#000000',
-        strokeThickness: 12,
-      })
+      .text(GAME_WIDTH / 2, 100, 'LIVRO INFANTIL + REALIDADE AUMENTADA', textStyle(30, CSS.folha, { letterSpacing: 6 }))
       .setOrigin(0.5);
-
+    addLogo(this, GAME_WIDTH / 2, 215, 160);
     this.add
-      .text(GAME_WIDTH / 2, 340, 'Abra o livro e toque em Começar', {
-        fontFamily: 'monospace',
-        fontSize: '44px',
-        color: '#ffffff',
-        stroke: '#000000',
-        strokeThickness: 6,
-      })
+      .text(GAME_WIDTH / 2, 345, 'Abra o livro e toque em Começar', textStyle(46))
       .setOrigin(0.5);
 
     createButton(this, GAME_WIDTH / 2, 540, '▶ COMEÇAR', () => this.start(), {

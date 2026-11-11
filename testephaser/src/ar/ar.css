@@ -7,8 +7,8 @@
   position: fixed;
   inset: 0;
   z-index: 5;
-  color: #ffffff;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #2b1d16;
+  font-family: 'Baloo 2', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -28,7 +28,7 @@
     calc(env(safe-area-inset-right, 0px) + 12px)
     calc(env(safe-area-inset-bottom, 0px) + 8px)
     calc(env(safe-area-inset-left, 0px) + 12px);
-  background: #1a1a2e;
+  background: #f6f0e7;
   box-sizing: border-box;
 }
 
@@ -43,22 +43,24 @@
   appearance: none;
   min-width: 48px;
   min-height: 48px;
-  border: 3px solid #ffffff;
+  border: 3px solid #2b1d16;
   border-radius: 999px;
-  background: #333355;
-  color: #ffffff;
+  background: #f6f0e7;
+  color: #2b1d16;
+  box-shadow: 0 4px 0 #2b1d16;
   font: inherit;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 .ar-overlay button:focus-visible,
 .sym-overlay button:focus-visible {
-  outline: 4px solid #ffe066;
+  outline: 4px solid #2e2582;
   outline-offset: 3px;
 }
 .ar-overlay button:active,
 .sym-overlay button:active {
-  transform: scale(0.96);
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #2b1d16;
 }
 
 .ar-top {
@@ -81,21 +83,24 @@
   padding: 0;
   font-size: 24px !important;
   line-height: 1;
-  background: rgba(0, 0, 0, 0.55) !important;
+  background: #f6f0e7 !important;
 }
 .ar-status {
   flex: 1;
   margin: 0;
   padding: 10px 16px;
+  border: 3px solid #2b1d16;
   border-radius: 18px;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(246, 240, 231, 0.94);
   font-size: clamp(17px, 4.2vmin, 26px);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.25;
   text-align: center;
 }
 .ar-overlay.is-error .ar-status {
-  background: rgba(170, 40, 40, 0.92);
+  background: #f6f0e7;
+  border-color: #5c2a1e;
+  color: #5c2a1e;
 }
 
 .ar-bottom {
@@ -110,11 +115,15 @@
   gap: 12px;
 }
 .ar-play {
-  padding: 16px 40px;
-  border-color: #ffffff !important;
-  background: #33aa66 !important;
-  font-size: clamp(22px, 6vmin, 36px) !important;
-  box-shadow: 0 6px 0 #1d6b3f;
+  padding: 16px 44px 10px;
+  border-color: #2b1d16 !important;
+  background: #d9a55b !important;
+  font-family: 'Luckiest Guy', 'Arial Black', sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: clamp(24px, 6.5vmin, 40px) !important;
+  box-shadow: 0 6px 0 #2b1d16;
   animation: ar-pulse 1.4s ease-in-out infinite;
 }
 .ar-help {
@@ -122,7 +131,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 18px;
-  background: rgba(0, 0, 0, 0.6) !important;
+  background: #f6f0e7 !important;
   font-size: clamp(15px, 3.6vmin, 20px);
 }
 .ar-help-icons {
@@ -131,12 +140,13 @@
   padding: 4px;
   border-radius: 10px;
   background: #ffffff;
+  border: 2px solid #a47551;
 }
 /* sem câmera ou depois de muito tempo procurando: a alternativa vira o
    botão principal */
 .ar-overlay.needs-help .ar-help {
   padding: 14px 26px;
-  background: #33aa66 !important;
+  background: #d9a55b !important;
   font-size: clamp(18px, 5vmin, 28px);
   animation: ar-pulse 1.4s ease-in-out infinite;
 }
@@ -166,13 +176,13 @@
   height: 15vmin;
   min-width: 52px;
   min-height: 52px;
-  border: 4px dashed rgba(255, 255, 255, 0.6);
+  border: 4px dashed #a47551;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #efe5d6;
 }
 .sym-slot.is-filled {
   border-style: solid;
-  border-color: #ffffff;
+  border-color: #2b1d16;
   background: #ffffff;
 }
 .sym-slot svg {
@@ -183,11 +193,11 @@
   animation: sym-shake 0.4s ease-in-out 2;
 }
 .sym-overlay.is-wrong .sym-slot.is-filled {
-  border-color: #e0263e;
+  border-color: #5c2a1e;
 }
 .sym-overlay.is-right .sym-slot.is-filled {
-  border-color: #33ff88;
-  box-shadow: 0 0 0 4px #33ff88;
+  border-color: #3f6b55;
+  box-shadow: 0 0 0 4px #3f6b55;
 }
 @keyframes sym-shake {
   25% { transform: translateX(-12px); }
@@ -217,9 +227,9 @@
   min-width: 60px;
   padding: 6px;
   border-radius: 18px;
-  border-color: #cfcfe6;
+  border-color: #2b1d16;
   background: #ffffff;
-  color: #1a1a2e;
+  color: #2b1d16;
   font-size: clamp(12px, 2.6vmin, 16px);
 }
 @media (orientation: portrait) {

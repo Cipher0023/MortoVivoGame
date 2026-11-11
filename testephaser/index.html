@@ -7,7 +7,11 @@
     <!-- "Adicionar à tela de início": abre sem barra do navegador. É o único
          jeito de tela cheia no iPhone, onde o Safari não tem a API de fullscreen. -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="theme-color" content="#2B1D16" />
+    <!-- Fontes da página "Sobre o projeto" (ver src/ui/theme.js) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Luckiest+Guy&display=swap" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -16,7 +20,7 @@
       html, body {
         margin: 0;
         padding: 0;
-        background: #1a1a2e;
+        background: #2b1d16;
         height: 100%;
         overflow: hidden;
         /* touch: sem zoom por duplo toque, sem seleção de texto nem menu de "segurar" */
@@ -48,11 +52,12 @@
         position: fixed;
         inset: 0;
         z-index: 10;
-        background: #1a1a2e;
-        color: #ffffff;
-        font-family: monospace;
-        font-size: 20px;
-        line-height: 1.5;
+        background: #f6f0e7;
+        color: #2b1d16;
+        font-family: 'Baloo 2', system-ui, sans-serif;
+        font-weight: 700;
+        font-size: 22px;
+        line-height: 1.4;
         text-align: center;
         flex-direction: column;
         align-items: center;
@@ -60,29 +65,50 @@
         gap: 28px;
         padding: 24px;
       }
+      #rotate-hint .rotate-title {
+        font-family: 'Luckiest Guy', 'Arial Black', sans-serif;
+        font-weight: 400;
+        font-size: 34px;
+        line-height: 1.05;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #5c2a1e;
+      }
       #rotate-hint .phone {
         width: 56px;
         height: 96px;
-        border: 5px solid #ffffff;
+        border: 5px solid #2b1d16;
         border-radius: 12px;
+        background: #d9a55b;
+        box-shadow: 0 5px 0 #2b1d16;
         animation: rotate-phone 2s ease-in-out infinite;
       }
       @keyframes rotate-phone {
         0%, 20% { transform: rotate(0deg); }
         60%, 100% { transform: rotate(90deg); }
       }
+      @media (prefers-reduced-motion: reduce) {
+        #rotate-hint .phone { animation: none; transform: rotate(90deg); }
+      }
       /* Botão do aviso na tela inicial do livro, onde o navegador consegue
-         girar a tela sozinho (Android): um toque já deita e começa. */
+         girar a tela sozinho (Android): um toque já deita e começa. Mesmo
+         botão da página "Sobre o projeto". */
       #rotate-start {
-        padding: 18px 36px;
-        border: 3px solid #ffffff;
+        padding: 14px 36px 10px;
+        border: 3px solid #2b1d16;
         border-radius: 999px;
-        background: #33aa66;
-        color: #ffffff;
-        font: inherit;
-        font-size: 26px;
-        font-weight: bold;
+        background: #d9a55b;
+        color: #2b1d16;
+        box-shadow: 0 5px 0 #2b1d16;
+        font-family: 'Luckiest Guy', 'Arial Black', sans-serif;
+        font-size: 28px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
         touch-action: manipulation;
+      }
+      #rotate-start:active {
+        transform: translateY(4px);
+        box-shadow: 0 1px 0 #2b1d16;
       }
       #rotate-start[hidden] {
         display: none;
@@ -97,7 +123,8 @@
   <body>
     <div id="rotate-hint">
       <div class="phone"></div>
-      <div>Gire o aparelho para a horizontal<br />para jogar</div>
+      <div class="rotate-title">Gire o celular</div>
+      <div>Deite o aparelho na horizontal<br />para jogar</div>
       <button type="button" id="rotate-start" hidden>▶ Começar</button>
     </div>
     <div id="game-container"></div>

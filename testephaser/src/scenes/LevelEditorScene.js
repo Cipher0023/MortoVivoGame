@@ -41,6 +41,7 @@ import {
 } from '../levels/assetSettings.js';
 import { getOfficialLevel } from '../levels/officialLevels.js';
 import { layerGrid } from '../levels/layerGrid.js';
+import { buildTerrain, isTerrainKey, terrainEnabled } from '../levels/terrain.js';
 
 // Editor de fases (Fase 5 do livro; uso no computador, com mouse e teclado).
 // Monta fases jogáveis: chão e objetos (na grade, com tamanho, posição fina
@@ -109,6 +110,9 @@ export default class LevelEditorScene extends Phaser.Scene {
 
     // chão e objetos por camada, em ordem de desenho: { key, col, row, layer, image }
     this.layerSprites = { main: [], near: [], far: [] };
+    // terreno gerado do chão (ver refreshTerrain); a cena pode ser reaberta
+    this.terrain = null;
+    this.terrainSignature = null;
     this.layer = 'main';
     this.sprites = this.layerSprites.main; // os da camada que está sendo editada
     this.grid = this.gridOf('main'); // grade da camada que está sendo editada
@@ -151,6 +155,7 @@ export default class LevelEditorScene extends Phaser.Scene {
       this.scrollToContentEnd();
     });
     this.input.keyboard.on('keydown-P', () => this.startTest());
+    this.input.keyboard.on('keydown-M', () => this.openMusicEditor());
     this.input.keyboard.on('keydown-ONE', () => this.setLayer('main'));
     this.input.keyboard.on('keydown-TWO', () => this.setLayer('near'));
     this.input.keyboard.on('keydown-THREE', () => this.setLayer('far'));
@@ -290,6 +295,7 @@ export default class LevelEditorScene extends Phaser.Scene {
       ['Refazer', () => this.redo()],
       ['Selecionar (Esc)', () => this.selectBrush(null)],
       ['Testar (P)', () => this.startTest()],
+      ['Música (M)', () => this.openMusicEditor()],
       ['Menu', () => this.goToMenu()],
     ]) {
       x += this.uiButton(x, 14, label, onClick).width + gap;
@@ -1292,7 +1298,13 @@ export default class LevelEditorScene extends Phaser.Scene {
     const { cell, originY } = this.gridOf(sprite.layer);
     const image = instantiateSprite(this, sprite, settingsFor(this.assetsOf(sprite), sprite), cell, originY);
     image.setDepth(LAYER_DEPTH[sprite.layer]);
-    if (sprite.layer !== this.layer) image.setAlpha(DIMMED_ALPHA);
+    // chão da fase: quem aparece é o terreno gerado (ver refreshTerrain); a
+    // imagem da peça só surge translúcida, enquanto ela é carregada
+    if (sprite.layer === 'main' && terrainEnabled() && isTerrainKey(sprite.key)) {
+      const setAlpha = image.setAlpha.bind(image);
+      image.setAlpha = (alpha) => setAlpha(alpha === PREVIEW_ALPHA ? alpha : 0);
+    }
+    image.setAlpha(sprite.layer !== this.layer ? DIMMED_ALPHA : 1);
     return image;
   }
 
@@ -1541,6 +1553,18 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.scene.launch('Play', { levelData: data, returnTo: 'LevelEditor' });
   }
 
+  // Editor de música (tracker de 8 canais): a fase fica dormindo, como no
+  // "Testar", e volta do jeito que estava.
+  openMusicEditor() {
+    this.cancelCarry();
+    playSfx(this, 'confirm');
+    this.isPainting = false;
+    this.ghost.clear();
+    this.positionBrushPreview(null);
+    this.scene.sleep();
+    this.scene.launch('MusicEditor', { returnTo: 'LevelEditor' });
+  }
+
   // ---------------------------------------------------------------------
   // Undo / redo — snapshot do nível inteiro (grid pequeno o bastante pra
   // clonar ser mais simples e confiável do que inverter cada operação).
@@ -1631,7 +1655,30 @@ export default class LevelEditorScene extends Phaser.Scene {
     this.scene.start('MainMenu');
   }
 
+  // Terreno da camada da fase: refeito quando o chão muda (peça, posição,
+  // espelho ou tamanho). Comparar a "assinatura" a cada quadro é barato e
+  // pega todas as mudanças — colocar, apagar, desfazer, carregar.
+  refreshTerrain() {
+    if (!terrainEnabled()) return;
+    const sprites = this.layerSprites.main.filter((sprite) => isTerrainKey(sprite.key));
+    const assets = this.layerAssets.main;
+    const signature = sprites
+      .map((sprite) => {
+        const { cols, rows } = settingsFor(assets, sprite);
+        return `${sprite.key},${sprite.col},${sprite.row},${sprite.flipX ? 1 : 0}${sprite.flipY ? 1 : 0},${cols},${rows}`;
+      })
+      .join(';');
+    if (signature !== this.terrainSignature) {
+      this.terrainSignature = signature;
+      this.terrain?.destroy();
+      this.terrain = buildTerrain(this, sprites, assets, this.gridOf('main').cell);
+    }
+    const alpha = this.layer === 'main' ? 1 : DIMMED_ALPHA;
+    for (const object of this.terrain.objects) object.setAlpha(alpha);
+  }
+
   update(time, delta) {
+    this.refreshTerrain();
     // setas: sem seleção rolam a tela; com seleção movem as peças (handleArrow)
     const panDelta = (PAN_SPEED * delta) / 1000;
     if (this.selection.size === 0 && this.cursors.left.isDown) this.cameras.main.scrollX -= panDelta;

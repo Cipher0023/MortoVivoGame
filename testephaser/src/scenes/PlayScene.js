@@ -26,6 +26,7 @@ import { settingsFor, spriteArea, pieceCollision, piecePassThrough } from '../le
 import { ENTITY_SHAPES, entityCenter, createChannelMarker } from '../levels/entityCatalog.js';
 import { isTouchEnabled } from './TouchControlsScene.js';
 import { playSfx } from '../audio/sfx.js';
+import { playMusic, stopMusic } from '../audio/music.js';
 import { PadReader, PAD } from '../input/gamepad.js';
 import { isGameMode, scanSceneKey } from '../config/mode.js';
 import { markCompleted } from '../config/progress.js';
@@ -34,7 +35,12 @@ import { markCompleted } from '../config/progress.js';
 // mecânica, ver entityCatalog). As fases oficiais (src/levels/data) e o
 // "Testar" do editor passam por aqui.
 
-const NO_TOUCH = { x: 0, y: 0, jump: false, action: false, attack: false };
+const NO_TOUCH = { x: 0, y: 0, jump: false, action: false, drag: null };
+// Mira no touch: começa no meio do arco e o dedo arrastado muda o ângulo
+// (px de arrasto por grau) e, para os lados, vira o personagem.
+const TOUCH_AIM = { START_DEG: 45, PX_PER_DEG: 4, TURN_PX: 40 };
+// Rosto que aparece no botão TROCAR (o do parceiro, para quem vai trocar).
+const PORTRAIT = { living: 'boy-walk-01', skeleton: 'skeleton-walk-1' };
 // mundo nunca mais estreito que a visão da câmera com zoom (960px)
 const MIN_WORLD_COLS = 16;
 // a água "começa" um pouco abaixo do topo da célula da superfície: quem está
@@ -93,12 +99,19 @@ export default class PlayScene extends Phaser.Scene {
     this.createInput();
     this.createColliders();
     this.createHUD();
+    // música da fase (config/phases.js); morrer e recomeçar não reinicia a
+    // música. No teste do editor não há fase: fica sem música.
+    playMusic(this, this.phase?.music);
     this.pushSoundTimer = 0;
     // ms que o Vivo está na água (morre em WATER.DROWN_MS). Soma o delta,
     // como os timers do Phaser: com o jogo pausado (celular em pé) não conta.
     this.drownElapsed = 0;
     this.bubbleTimer = 0;
     this.aim = null; // mira do arremesso em andamento: { startTime, angle }
+    // touch: o que o botão de AÇÃO faz agora ({ mode, label } ou null) e o
+    // modo travado enquanto o dedo segura
+    this.touchContext = null;
+    this.touchActionMode = null;
     this.arm = null; // braço arremessado (fora do corpo): { object, colliders }
     this.aimGfx = this.add.graphics().setDepth(50);
     this.head = null; // cabeça tirada da Esqueleto: { object, colliders }
@@ -503,6 +516,7 @@ export default class PlayScene extends Phaser.Scene {
 
   // Sai da fase pra outra cena (ex.: leitor de QR), levando junto os overlays.
   leaveTo(sceneKey) {
+    stopMusic(this);
     this.scene.stop('TouchControls');
     this.scene.stop('Hud');
     this.scene.start(sceneKey);
@@ -516,6 +530,7 @@ export default class PlayScene extends Phaser.Scene {
       this.leaveTo(isGameMode() ? 'MainMenu' : scanSceneKey());
       return;
     }
+    stopMusic(this);
     this.scene.stop('TouchControls');
     this.scene.stop('Hud');
     this.scene.wake(this.returnTo);
@@ -624,10 +639,18 @@ export default class PlayScene extends Phaser.Scene {
     // (todos rodam: JustDown/consumePress só valem uma vez por aperto)
     const jumpKeyPressed = [k.jump, k.up, k.upW].map((key) => Phaser.Input.Keyboard.JustDown(key)).some(Boolean);
     const jumpPressed = this.consumeTouchPress('jump') || jumpKeyPressed || pad.pressed(PAD.A);
-    const actionHeld = k.action.isDown || pad.held(PAD.X) || touch.action;
-    const attackHeld = k.attack.isDown || pad.held(PAD.B, PAD.RT) || touch.attack;
+    // Touch: um botão de AÇÃO só (ver TouchControlsScene). O que ele faz —
+    // interagir ou mirar/lançar — é decidido no aperto, pelo rótulo que ele
+    // mostrava, e vale até soltar.
+    const touchActionPressed = this.consumeTouchPress('action');
+    const touchMode = touchActionPressed ? (this.touchContext?.mode ?? 'action') : this.touchActionMode;
+    this.touchActionMode = touch.action ? touchMode : null;
+    const touchAttack = touchMode === 'attack';
+    const attackHeld = k.attack.isDown || pad.held(PAD.B, PAD.RT) || (touchAttack && touch.action);
     const attackKeyPressed = Phaser.Input.Keyboard.JustDown(k.attack);
-    const attackPressed = this.consumeTouchPress('attack') || attackKeyPressed || pad.pressed(PAD.B, PAD.RT);
+    const attackPressed = (touchAttack && touchActionPressed) || attackKeyPressed || pad.pressed(PAD.B, PAD.RT);
+    const touchActionHeld = touchMode === 'action' && touch.action;
+    const actionHeld = k.action.isDown || pad.held(PAD.X) || touchActionHeld;
 
     if (this.updateWater(delta)) return;
     this.updateSlopes();
@@ -635,7 +658,7 @@ export default class PlayScene extends Phaser.Scene {
     const active = this.characterManager.getActive();
     // ataque: o Vivo chuta a bola; a Esqueleto mira o braço (parada — ←/→
     // só viram o lado)
-    const aiming = this.updateAim(active, attackHeld, attackPressed, moveX, time);
+    const aiming = this.updateAim(active, attackHeld, attackPressed, moveX, time, touchAttack && touchActionPressed);
     // pular ao lado do parceiro 1 bloco acima: ele puxa (no lugar do pulo)
     const pulled = jumpPressed && !aiming && this.tryAutoPull(active);
     active.handleMovement({ x: aiming ? 0 : moveX, jump: aiming || pulled ? false : jumpDown });
@@ -664,7 +687,7 @@ export default class PlayScene extends Phaser.Scene {
     this.applySlopeSpeed();
 
     const actionKeyPressed = Phaser.Input.Keyboard.JustDown(k.action);
-    const actionJustDown = this.consumeTouchPress('action') || actionKeyPressed || pad.pressed(PAD.X);
+    const actionJustDown = (touchMode === 'action' && touchActionPressed) || actionKeyPressed || pad.pressed(PAD.X);
 
     if (actionJustDown) this.handleAction(active);
 
@@ -780,7 +803,9 @@ export default class PlayScene extends Phaser.Scene {
   // ângulo do momento. Esqueleto: arremessa o braço (no chão, com o braço no
   // corpo). Vivo: chuta a bola que está no pé dele (no chão). Quem mira fica
   // parado (←/→ só viram o lado). Retorna true enquanto está mirando.
-  updateAim(active, held, pressed, moveX, time) {
+  // fromTouch: começou pelo botão da tela — aí a mira segue o dedo
+  // arrastado em vez de oscilar sozinha.
+  updateAim(active, held, pressed, moveX, time, fromTouch = false) {
     if (!this.aim) {
       if (!pressed) return false;
       const ball = active === this.living ? this.ballInReach() : null;
@@ -790,7 +815,13 @@ export default class PlayScene extends Phaser.Scene {
         playSfx(this, 'nope');
         return false;
       }
-      this.aim = { character: active, ball, startTime: time, angle: ATTACK.AIM_MIN_DEG };
+      this.aim = {
+        character: active,
+        ball,
+        startTime: time,
+        angle: fromTouch ? TOUCH_AIM.START_DEG : ATTACK.AIM_MIN_DEG,
+        touch: fromTouch,
+      };
       // começou o chute: a bola para no pé dele
       ball?.body.setVelocity(0, 0);
       playSfx(this, 'aim');
@@ -806,10 +837,23 @@ export default class PlayScene extends Phaser.Scene {
     // mirando o chute, a bola fica parada (só a gravidade age)
     if (aim.ball) aim.ball.body.setVelocityX(0);
 
-    // vai e volta entre as pontas do arco
-    const sweep = ((time - aim.startTime) / ATTACK.AIM_SWEEP_MS) % 2;
-    const t = sweep < 1 ? sweep : 2 - sweep;
-    aim.angle = ATTACK.AIM_MIN_DEG + (ATTACK.AIM_MAX_DEG - ATTACK.AIM_MIN_DEG) * t;
+    if (aim.touch) {
+      // touch: arrastar pra cima levanta o arco; pros lados vira o personagem
+      const drag = this.getTouchState().drag;
+      if (drag) {
+        if (Math.abs(drag.dx) > TOUCH_AIM.TURN_PX) this.setFacing(active, Math.sign(drag.dx));
+        aim.angle = Phaser.Math.Clamp(
+          TOUCH_AIM.START_DEG - drag.dy / TOUCH_AIM.PX_PER_DEG,
+          ATTACK.AIM_MIN_DEG,
+          ATTACK.AIM_MAX_DEG
+        );
+      }
+    } else {
+      // teclado/controle: vai e volta entre as pontas do arco
+      const sweep = ((time - aim.startTime) / ATTACK.AIM_SWEEP_MS) % 2;
+      const t = sweep < 1 ? sweep : 2 - sweep;
+      aim.angle = ATTACK.AIM_MIN_DEG + (ATTACK.AIM_MAX_DEG - ATTACK.AIM_MIN_DEG) * t;
+    }
 
     if (!held) {
       if (aim.ball) aim.ball.kick(this.facingOf(this.living), aim.angle);
@@ -874,11 +918,28 @@ export default class PlayScene extends Phaser.Scene {
     const g = this.aimGfx.clear();
     const track = [];
     for (let deg = ATTACK.AIM_MIN_DEG; deg <= ATTACK.AIM_MAX_DEG; deg += 5) track.push(point(deg, R));
-    g.lineStyle(3, 0xffffff, 0.3).strokePoints(track);
+    g.lineStyle(3, 0xf6f0e7, 0.45).strokePoints(track);
+
+    // trajetória prevista (lançamento oblíquo, sem contar quiques): pontinhos
+    // de papel com contorno café, cada vez menores
+    const speed = aim.ball ? BALL.KICK_SPEED : ATTACK.ARM_SPEED;
+    const rad = Phaser.Math.DegToRad(aim.angle);
+    const vx = facing * speed * Math.cos(rad);
+    const vy = -speed * Math.sin(rad);
+    const DOTS = 16;
+    for (let i = 1; i <= DOTS; i++) {
+      const t = i * 0.07;
+      const px = x + vx * t;
+      const py = y + vy * t + (PHYSICS.GRAVITY_Y * t * t) / 2;
+      const size = 6 - (i / DOTS) * 3;
+      g.fillStyle(0x2b1d16, 0.9).fillCircle(px, py, size + 2);
+      g.fillStyle(0xf6f0e7, 1).fillCircle(px, py, size);
+    }
 
     const tip = point(aim.angle, R);
-    g.lineStyle(3, 0xffe066, 1).lineBetween(x, y, tip.x, tip.y);
-    g.fillStyle(0xffe066, 1).fillCircle(tip.x, tip.y, 6);
+    g.lineStyle(4, 0x2b1d16, 1).lineBetween(x, y, tip.x, tip.y);
+    g.fillStyle(0xd9a55b, 1).fillCircle(tip.x, tip.y, 7);
+    g.lineStyle(2, 0x2b1d16, 1).strokeCircle(tip.x, tip.y, 7);
   }
 
   throwArm(angle) {
@@ -1358,77 +1419,68 @@ export default class PlayScene extends Phaser.Scene {
     holder.hasKey = false;
   }
 
+  // HUD enxuto: só o ícone da chave, quando alguém está com ela.
   updateHUD(active) {
-    const name = active === this.living ? 'Vivo (Bram)' : 'Esqueleto (Ossos)';
-    const holder = this.getKeyHolder();
-    const key = holder === this.living ? 'com o Vivo' : holder === this.skeleton ? 'com o Esqueleto' : 'Não';
-    const skeleton = this.skeleton;
-    const states = [];
-    if (!skeleton.hasHead) states.push('sem cabeça');
-    if (this.collapseTimer) states.push(`desmontada ${Math.ceil(this.collapseTimer.getRemaining() / 1000)}s`);
-    const skeletonState = states.length ? ` [${states.join(', ')}]` : '';
-    const arm = skeleton.hasArm ? 'no corpo' : 'arremessado (vá buscar)';
-    const headCarrier = this.head?.object.carrier;
-    const head = skeleton.hasHead ? 'no corpo' : headCarrier ? 'com o Vivo' : 'no chão';
     // o create() da HudScene só roda no frame seguinte ao launch
-    if (!this.hud.statusText) return;
+    if (!this.hud.keyBadge) return;
+    this.hud.setKey(Boolean(this.getKeyHolder()));
     const waiting = this.followSystem.waiting;
-    const alerts = [];
-    if (this.living.inWater) {
-      // o que vier primeiro: o tempo acabar ou afundar demais
-      const byTime = (WATER.DROWN_MS - this.drownElapsed) / 1000;
-      // no fundo de uma piscina rasa não afunda mais: vale só o tempo
-      const onBottom = this.living.body.blocked.down;
-      const byDepth = onBottom ? Infinity : (this.drownDepth(this.living) - this.living.body.bottom) / WATER.SINK_SPEED;
-      const left = Math.max(0, Math.ceil(Math.min(byTime, byDepth)));
-      let rescue = 'chegue perto da borda, 1 bloco abaixo do parceiro';
-      if (this.canPull(this.skeleton, this.living)) {
-        rescue = active === this.living ? 'pule pra ser puxado' : 'aperte a ação pra puxar';
-      }
-      alerts.push(`O Vivo está se afogando! ${left}s (${rescue})`);
-    }
-    const partner = this.partnerOf(active);
-    if (active === this.living && this.ballInReach()) alerts.push('Segure o ataque: mirar o chute');
-    if (this.canPull(active, partner)) alerts.push('Ação: puxar o parceiro');
-    else if (!this.living.inWater && this.canPull(partner, active)) alerts.push('Pule: o parceiro te puxa');
-    const hasPartner = this.characterManager.hasPartner();
-    this.hud.setStatus(
-      [
-        `Personagem: ${name}`,
-        ...(this.skeleton.absent ? [] : [`Esqueleto: cabeça ${head}, braço ${arm}${skeletonState}`]),
-        `Chave: ${key}`,
-        ...(hasPartner ? [`Parceiro: ${waiting ? 'esperando' : 'seguindo'}`] : []),
-        ...alerts,
-      ].join('\n')
-    );
     // (setText ignora texto igual, então chamar todo frame é barato)
     if (this.touchControls?.buttons) {
       this.touchControls.setButtonLabel('wait', waiting ? 'SEGUIR' : 'ESPERAR');
-      this.touchControls.setButtonLabel('attack', active === this.living ? 'CHUTAR' : 'BRAÇO');
       this.updateTouchButtons(active);
     }
   }
 
-  // Celular: só aparecem os botões que o personagem ativo consegue usar
-  // agora (AÇÃO fica sempre — serve pros dois; TROCAR e ESPERAR, sempre que
-  // a fase tem os dois personagens).
+  // Celular: só aparece o que dá para usar agora.
+  //   AÇÃO    um botão só, com o nome do que vai fazer (ver touchContextOf);
+  //           some quando não há nada para fazer
   //   PULAR   some com a Esqueleto desmontada (ela não se mexe)
-  //   CHUTAR  Vivo, só em fase com bola
-  //   BRAÇO   Esqueleto montada e com o braço no corpo
   //   CABEÇA  só a Esqueleto tira/põe (o Vivo carrega a cabeça com a AÇÃO);
   //           some desmontada ou com a cabeça nas mãos do Vivo
+  //   TROCAR / ESPERAR  só em fase com os dois personagens
   updateTouchButtons(active) {
     const skeleton = this.skeleton;
     const isSkeleton = active === skeleton;
     const skeletonFree = isSkeleton && !skeleton.collapsed;
     const touch = this.touchControls;
+
+    // enquanto o dedo segura a ação, o rótulo fica o do aperto
+    if (!this.touchActionMode) this.touchContext = this.touchContextOf(active);
+    const context = this.touchContext;
+    touch.setButtonVisible('action', Boolean(context) || Boolean(this.touchActionMode));
+    if (context) touch.setButtonLabel('action', context.label);
+
     touch.setButtonVisible('jump', !(isSkeleton && skeleton.collapsed));
-    touch.setButtonVisible('attack', isSkeleton ? skeletonFree && skeleton.hasArm : this.balls.length > 0);
     touch.setButtonVisible('head', skeletonFree && this.head?.object.carrier !== this.living);
+
     // fase com um personagem só: não tem com quem trocar nem quem esperar
     const hasPartner = this.characterManager.hasPartner();
     touch.setButtonVisible('switch', hasPartner);
     touch.setButtonVisible('wait', hasPartner);
+    if (hasPartner) touch.setButtonImage('switch', isSkeleton ? PORTRAIT.living : PORTRAIT.skeleton);
+  }
+
+  // O que o botão de AÇÃO faria agora, na mesma ordem de handleAction():
+  // alavanca > puxar o parceiro > (Vivo) cabeça > caixa; sem nada disso, o
+  // ataque (chutar a bola no pé / arremessar o braço). null = nada a fazer.
+  touchContextOf(active) {
+    if (active.collapsed || active.beingPulled) return null;
+    const act = (label) => ({ mode: 'action', label });
+    const attack = (label) => ({ mode: 'attack', label });
+    if (this.levers.some((lever) => !lever.pulled && this.physics.overlap(active, lever))) return act('ALAVANCA');
+    if (this.characterManager.hasPartner() && this.canPull(active, this.partnerOf(active))) return act('PUXAR');
+    if (active === this.living) {
+      const head = this.head?.object;
+      if (head?.carrier === this.living) return act('SOLTAR');
+      if (head && !head.carrier && this.isNear(this.living, head)) return act('PEGAR');
+      if (this.boxesTouching(active).length > 0) return act('EMPURRAR');
+      const ball = this.ballInReach();
+      if (ball && this.canKick(ball)) return attack('CHUTAR');
+      return null;
+    }
+    if (this.canAimArm()) return attack('BRAÇO');
+    return null;
   }
 
   triggerDeath(reason) {
@@ -1450,6 +1502,8 @@ export default class PlayScene extends Phaser.Scene {
     this.physics.pause();
     // libera a próxima fase (no teste do editor não há fase do livro)
     if (this.phase && !this.returnTo) markCompleted(this.phase.number);
+    // a música some para a vinheta de vitória aparecer
+    stopMusic(this, { fade: 1 });
     playSfx(this, 'win');
     this.hud.showLevelComplete();
   }

@@ -99,12 +99,20 @@ export const SOUND_MANIFEST = [
 // pelo mesmo pipeline de textura usado pelos tiles/objetos do editor.
 export const BLOCK_MANIFEST = [{ key: 'bloco-solido', file: 'bloco-solido.png' }];
 
-// Ciclo de caminhada do "Vivo" (12 frames), reaproveitado do game2.0.
+// Menino ("Vivo"): corrida (12 quadros, 4 desenhos repetidos 3 vezes cada)
+// e pulo (6 poses). Todos na mesma tela de 210x344 com os pés na base, pra
+// trocar de quadro sem o boneco tremer (gerados a partir de
+// Docs/transferencia: correndo menino0001…0012 e pulando pose1…6).
 export const BOY_WALK_FRAME_COUNT = 12;
 export const BOY_WALK_MANIFEST = Array.from({ length: BOY_WALK_FRAME_COUNT }, (_, i) => {
   const n = String(i + 1).padStart(2, '0');
-  return { key: `boy-walk-${n}`, file: `walk_${n}.png` };
+  return { key: `boy-walk-${n}`, file: `run_${n}.png` };
 });
+export const BOY_JUMP_FRAME_COUNT = 6;
+export const BOY_JUMP_MANIFEST = Array.from({ length: BOY_JUMP_FRAME_COUNT }, (_, i) => ({
+  key: `boy-jump-${i + 1}`,
+  file: `jump_${i + 1}.png`,
+}));
 
 // Ciclo de caminhada da Esqueleto (a menina caveira): cav-run-1 a 4.
 export const SKELETON_WALK_FRAME_COUNT = 4;

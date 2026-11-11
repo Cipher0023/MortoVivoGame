@@ -3,6 +3,7 @@ import { GAME_WIDTH } from '../config/constants.js';
 import { createButton } from '../ui/Button.js';
 import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
+import { PALETTE, CSS, FONT_TITLE, paintPaper, titleStyle, textStyle, drawPaperPanel } from '../ui/theme.js';
 
 // Tutorial de como entrar numa fase: escanear o QR code do livro. Três
 // passos em cartões; o botão final abre a câmera (ScanScene).
@@ -25,14 +26,8 @@ export default class TutorialScene extends Phaser.Scene {
   }
 
   create() {
-    this.add
-      .text(GAME_WIDTH / 2, 110, 'Como entrar numa fase', {
-        fontFamily: 'monospace',
-        fontSize: '72px',
-        fontStyle: 'bold',
-        color: '#ffe066',
-      })
-      .setOrigin(0.5);
+    paintPaper(this);
+    this.add.text(GAME_WIDTH / 2, 110, 'COMO ENTRAR NUMA FASE', titleStyle(80)).setOrigin(0.5);
 
     const totalWidth = STEPS.length * CARD_WIDTH + (STEPS.length - 1) * CARD_GAP;
     STEPS.forEach((step, i) => {
@@ -42,7 +37,7 @@ export default class TutorialScene extends Phaser.Scene {
 
     createButton(this, GAME_WIDTH / 2 - 380, 960, 'VOLTAR', () => this.scene.start('MainMenu'), {
       width: 320,
-      color: 0x333355,
+      variant: 'secondary',
       sound: 'back',
     });
     createButton(this, GAME_WIDTH / 2 + 170, 960, 'ABRIR CÂMERA', () => this.scene.start('Scan'), {
@@ -64,36 +59,34 @@ export default class TutorialScene extends Phaser.Scene {
 
   createCard(x, y, number, step) {
     const card = this.add.graphics();
-    card.fillStyle(0x262645, 1);
-    card.fillRoundedRect(x - CARD_WIDTH / 2, y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT, 28);
-    card.lineStyle(4, 0x5555aa, 1);
-    card.strokeRoundedRect(x - CARD_WIDTH / 2, y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT, 28);
+    drawPaperPanel(card, x - CARD_WIDTH / 2, y - CARD_HEIGHT / 2, CARD_WIDTH, CARD_HEIGHT, 28, {
+      fill: PALETTE.papelEscuro,
+      shadow: 10,
+    });
 
-    // número do passo no canto
+    // número do passo no canto, como a lista "Como funciona" da página
     const badgeX = x - CARD_WIDTH / 2 + 56;
     const badgeY = y - CARD_HEIGHT / 2 + 56;
-    card.fillStyle(0xffe066, 1);
+    card.fillStyle(PALETTE.crema, 1);
     card.fillCircle(badgeX, badgeY, 36);
+    card.lineStyle(4, PALETTE.espresso, 1);
+    card.strokeCircle(badgeX, badgeY, 36);
     this.add
-      .text(badgeX, badgeY, String(number), {
-        fontFamily: 'monospace',
+      .text(badgeX, badgeY + 3, String(number), {
+        fontFamily: FONT_TITLE,
         fontSize: '44px',
-        fontStyle: 'bold',
-        color: '#1a1a2e',
+        color: CSS.espresso,
       })
       .setOrigin(0.5);
 
     step.drawIcon(this.add.graphics(), x, y + ICON_Y);
 
     this.add
-      .text(x, y + 150, step.text, {
-        fontFamily: 'monospace',
-        fontSize: '36px',
-        color: '#ffffff',
+      .text(x, y + 150, step.text, textStyle(38, CSS.espresso, {
         align: 'center',
-        lineSpacing: 8,
+        lineSpacing: 2,
         wordWrap: { width: CARD_WIDTH - 70 },
-      })
+      }))
       .setOrigin(0.5);
   }
 }
@@ -137,17 +130,17 @@ function drawBookIcon(g, cx, cy) {
 }
 
 function drawPhoneIcon(g, cx, cy) {
-  g.fillStyle(0x0f0f1e, 1);
+  g.fillStyle(PALETTE.espresso, 1);
   g.fillRoundedRect(cx - 80, cy - 125, 160, 250, 22);
-  g.lineStyle(6, 0xffffff, 1);
+  g.lineStyle(6, PALETTE.espresso, 1);
   g.strokeRoundedRect(cx - 80, cy - 125, 160, 250, 22);
   // lente da câmera
-  g.lineStyle(8, 0x33ff88, 1);
+  g.lineStyle(8, PALETTE.crema, 1);
   g.strokeCircle(cx, cy - 5, 42);
-  g.fillStyle(0x33ff88, 1);
+  g.fillStyle(PALETTE.crema, 1);
   g.fillCircle(cx, cy - 5, 16);
   // "botão" de permitir
-  g.fillStyle(0x33aa66, 1);
+  g.fillStyle(PALETTE.folha, 1);
   g.fillRoundedRect(cx - 55, cy + 70, 110, 32, 8);
 }
 
@@ -156,7 +149,7 @@ function drawScanIcon(g, cx, cy) {
   // cantos da moldura de leitura, como no leitor de verdade
   const half = 105;
   const arm = 40;
-  g.lineStyle(10, 0x33ff88, 1);
+  g.lineStyle(10, PALETTE.folha, 1);
   for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     const x = cx + sx * half;
     const y = cy + sy * half;

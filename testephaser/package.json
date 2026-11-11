@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "qrcodes": "node scripts/generate-qrcodes.mjs",
-    "simbolos": "node scripts/gerar-simbolos.mjs"
+    "simbolos": "node scripts/gerar-simbolos.mjs",
+    "banco": "node scripts/gerar-banco-instrumentos.mjs"
   },
   "devDependencies": {
     "@vitejs/plugin-basic-ssl": "^1.2.0",

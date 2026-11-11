@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import PreloadScene from './scenes/PreloadScene.js';
 import PlayScene from './scenes/PlayScene.js';
 import LevelEditorScene from './scenes/LevelEditorScene.js';
+import MusicEditorScene from './scenes/MusicEditorScene.js';
 import TouchControlsScene from './scenes/TouchControlsScene.js';
 import HudScene from './scenes/HudScene.js';
 import MainMenuScene from './scenes/MainMenuScene.js';
@@ -36,7 +37,7 @@ window.addEventListener('vite:preloadError', (event) => {
 const config = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  backgroundColor: '#1a1a2e',
+  backgroundColor: '#2b1d16',
   scale: {
     mode: Phaser.Scale.FIT,
     // Quem centraliza é o CSS (#game-container é flex): centralizar aqui
@@ -73,13 +74,30 @@ const config = {
     ScanScene,
     PlayScene,
     LevelEditorScene,
+    MusicEditorScene,
     HudScene,
     TouchControlsScene,
   ],
 };
 
-const game = new Phaser.Game(config);
-window.__game = game;
+// O Phaser desenha os textos no canvas na hora em que são criados: se a fonte
+// ainda não chegou, fica a fonte reserva para sempre. Espera as fontes da
+// página (Luckiest Guy e Baloo 2), mas no máximo 2,5 s — sem internet, segue
+// com a reserva.
+async function waitForFonts() {
+  if (!document.fonts?.load) return;
+  const fonts = Promise.all([
+    document.fonts.load('40px "Luckiest Guy"'),
+    document.fonts.load('bold 40px "Baloo 2"'),
+    document.fonts.load('500 40px "Baloo 2"'),
+  ]).catch(() => {});
+  await Promise.race([fonts, new Promise((resolve) => setTimeout(resolve, 2500))]);
+}
 
-// aviso de girar só depois do menu, pausa e reencaixe ao girar (ver orientation.js)
-initOrientation(game);
+waitForFonts().then(() => {
+  const game = new Phaser.Game(config);
+  window.__game = game;
+
+  // aviso de girar só depois do menu, pausa e reencaixe ao girar (ver orientation.js)
+  initOrientation(game);
+});

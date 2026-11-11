@@ -2,6 +2,7 @@ import { settingsFor, pieceCollision, piecePassThrough, spriteArea } from './ass
 import { isSlopeKey, slopeFromArea } from './slopes.js';
 import { BACKGROUND_LAYERS } from '../config/constants.js';
 import { layerGrid } from './layerGrid.js';
+import { buildTerrain, isTerrainKey, terrainEnabled } from './terrain.js';
 
 // espessura das paredes finas da rampa (lado alto e fundo)
 const RAMP_EDGE = 4;
@@ -105,9 +106,14 @@ export function buildLevelFromData(scene, levelData) {
     }
   }
 
+  // chão desenhado como terreno contínuo (ver terrain.js); objetos e, com
+  // ?chao=sprites, o chão antigo continuam peça por peça
+  const terrain = terrainEnabled();
+  if (terrain) buildTerrain(scene, levelData.tiles, levelData.assets, tileSize);
+
   for (const sprite of levelData.tiles) {
     const settings = settingsFor(levelData.assets, sprite);
-    instantiateSprite(scene, sprite, settings, tileSize);
+    if (!(terrain && isTerrainKey(sprite.key))) instantiateSprite(scene, sprite, settings, tileSize);
     if (!pieceCollision(sprite)) continue;
 
     const area = spriteArea(sprite, settings);

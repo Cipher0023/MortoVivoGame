@@ -7,6 +7,7 @@ import { startPhase } from '../levels/startPhase.js';
 import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
 import { setLandscapeRequired } from '../ui/orientation.js';
+import { paintPaper, titleStyle, textStyle } from '../ui/theme.js';
 
 // Abre a câmera (QrScannerOverlay, por cima do canvas) e manda o jogador pra
 // fase do QR code lido. Fase ainda não construída = aviso "em construção".
@@ -16,12 +17,9 @@ export default class ScanScene extends Phaser.Scene {
   }
 
   create() {
+    paintPaper(this);
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Abrindo a câmera…', {
-        fontFamily: 'monospace',
-        fontSize: '48px',
-        color: '#ffffff',
-      })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Abrindo a câmera…', textStyle(52))
       .setOrigin(0.5);
 
     this.scanner = new QrScannerOverlay({
@@ -73,26 +71,19 @@ export default class ScanScene extends Phaser.Scene {
     this.children.removeAll(true);
     this.removePadMenu();
     this.add
-      .text(GAME_WIDTH / 2, 360, `${phase.title}`, {
-        fontFamily: 'monospace',
-        fontSize: '96px',
-        fontStyle: 'bold',
-        color: '#ffe066',
-      })
+      .text(GAME_WIDTH / 2, 360, phase.title.toUpperCase(), titleStyle(104))
       .setOrigin(0.5);
     this.add
       .text(GAME_WIDTH / 2, 490, 'Essa fase ainda está em construção.\nVolte em breve!', {
-        fontFamily: 'monospace',
-        fontSize: '44px',
-        color: '#ffffff',
+        ...textStyle(46),
         align: 'center',
-        lineSpacing: 10,
+        lineSpacing: 4,
       })
       .setOrigin(0.5);
 
     createButton(this, GAME_WIDTH / 2 - 300, 760, 'MENU', () => this.scene.start('MainMenu'), {
       width: 400,
-      color: 0x333355,
+      variant: 'secondary',
       sound: 'back',
     });
     createButton(this, GAME_WIDTH / 2 + 250, 760, 'ESCANEAR OUTRA', () => this.scene.restart(), { width: 560 });

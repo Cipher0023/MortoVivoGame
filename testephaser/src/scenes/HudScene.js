@@ -8,6 +8,7 @@ import { onPadMenu } from '../input/gamepad.js';
 import { playSfx } from '../audio/sfx.js';
 import { isGameMode, scanSceneKey } from '../config/mode.js';
 import { speak } from '../ui/speech.js';
+import { PALETTE, CSS, titleStyle, textStyle, drawPaperPanel } from '../ui/theme.js';
 
 const KEYBOARD_HINT =
   'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar/puxar | C: cabeça | R (segurar/soltar): braço/chute | W/S: escada | M: som | Esc: sair';
@@ -17,7 +18,7 @@ const GAMEPAD_HINT =
 
 // HUD fixo de tela, em cena própria por cima da fase: assim o zoom/scroll da
 // câmera do jogo não desloca nem amplia os textos (setScrollFactor(0) não
-// protege contra zoom). A fase só chama setStatus()/showLevelComplete().
+// protege contra zoom). A fase só chama setKey()/showLevelComplete().
 export default class HudScene extends Phaser.Scene {
   constructor() {
     super('Hud');
@@ -28,13 +29,9 @@ export default class HudScene extends Phaser.Scene {
     // no celular a tela de 1920px é reduzida ~3x: textos precisam ser maiores
     const fontSize = touch ? 30 : 18;
 
-    this.statusText = this.add.text(16, 16, '', {
-      fontFamily: 'monospace',
-      fontSize: `${fontSize}px`,
-      color: '#ffffff',
-      backgroundColor: '#00000088',
-      padding: { x: 10, y: 8 },
-    });
+    // ícone da chave (canto de cima, à esquerda): só aparece com a chave
+    this.keyBadge = this.createKeyBadge(touch ? 1 : 0.7);
+    this.hasKey = false;
 
     const play = this.scene.get('Play');
     // fase aberta pelo "Testar" do editor: sair volta pro editor
@@ -52,11 +49,9 @@ export default class HudScene extends Phaser.Scene {
     // um controle conectado, a dica mostra os botões dele
     if (!touch) {
       const hint = this.add.text(16, GAME_HEIGHT - 44, KEYBOARD_HINT, {
-        fontFamily: 'monospace',
-        fontSize: '16px',
-        color: '#ffffff',
-        backgroundColor: '#00000088',
-        padding: { x: 8, y: 6 },
+        ...textStyle(17),
+        backgroundColor: `${CSS.papel}dd`,
+        padding: { x: 10, y: 4 },
       });
       const gamepad = this.input.gamepad;
       if (gamepad?.total > 0) hint.setText(GAMEPAD_HINT);
@@ -65,19 +60,55 @@ export default class HudScene extends Phaser.Scene {
     }
   }
 
-  setStatus(text) {
-    this.statusText.setText(text);
+  // Selo de papel redondo com uma chave dourada desenhada.
+  createKeyBadge(scale) {
+    const r = 56;
+    const g = this.add.graphics();
+    g.fillStyle(PALETTE.espresso, 1).fillCircle(0, 6, r);
+    g.fillStyle(PALETTE.papel, 1).fillCircle(0, 0, r);
+    g.lineStyle(5, PALETTE.espresso, 1).strokeCircle(0, 0, r);
+    // chave deitada: argola à esquerda, haste e dois dentes
+    const gold = 0xe2b33c;
+    g.fillStyle(PALETTE.espresso, 1);
+    g.fillCircle(-20, 0, 20);
+    g.fillRect(-6, -8, 46, 16);
+    g.fillRect(22, 0, 9, 22);
+    g.fillRect(34, 0, 8, 17);
+    g.fillStyle(gold, 1);
+    g.fillCircle(-20, 0, 15);
+    g.fillRect(-4, -4, 42, 8);
+    g.fillRect(25, 0, 4, 18);
+    g.fillRect(36, 0, 4, 13);
+    g.fillStyle(PALETTE.papel, 1).fillCircle(-20, 0, 6);
+    const badge = this.add.container(28 + r * scale, 28 + r * scale, [g]).setScale(scale);
+    badge.baseScale = scale;
+    badge.setVisible(false);
+    return badge;
+  }
+
+  // Mostra/esconde a chave; ao pegar, o selo "pula" na tela.
+  setKey(hasKey) {
+    if (hasKey === this.hasKey) return;
+    this.hasKey = hasKey;
+    const badge = this.keyBadge;
+    this.tweens.killTweensOf(badge);
+    badge.setVisible(hasKey);
+    if (!hasKey) return;
+    badge.setScale(badge.baseScale * 1.6);
+    this.tweens.add({ targets: badge, scale: badge.baseScale, duration: 350, ease: 'Back.Out' });
   }
 
   showLevelComplete() {
+    // cartão de papel no meio da tela, com o título e o botão
+    const panelWidth = 980;
+    const panelHeight = 440;
+    const panel = this.add.graphics();
+    drawPaperPanel(panel, (GAME_WIDTH - panelWidth) / 2, GAME_HEIGHT / 2 - 230, panelWidth, panelHeight, 36, {
+      shadow: 12,
+      lineWidth: 6,
+    });
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, 'Fase concluída!', {
-        fontFamily: 'monospace',
-        fontSize: '64px',
-        color: '#33ff88',
-        backgroundColor: '#00000099',
-        padding: { x: 28, y: 18 },
-      })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 110, 'FASE CONCLUÍDA!', titleStyle(96, CSS.folha))
       .setOrigin(0.5);
     const play = this.scene.get('Play');
     // direto pra câmera (o tutorial já foi visto): escanear a próxima fase do

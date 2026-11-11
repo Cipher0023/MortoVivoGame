@@ -1,3 +1,4 @@
+import { BOY_DRAWING_HEIGHT } from '../entities/Living.js';
 import { COLORS } from '../config/constants.js';
 
 // Peças de mecânica que o editor coloca e a PlayScene monta. Cada peça ocupa
@@ -99,8 +100,10 @@ export function createEntityPreview(scene, type, channel, size = 64) {
   const parts = [];
 
   if (type === 'living') {
-    const boy = scene.add.image(0, 0, 'boy-walk-01');
-    boy.setScale((60 * scale) / boy.height);
+    // o desenho ocupa só a parte de baixo do quadro (em cima sobra espaço
+    // pro pulo): escala pela altura do desenho e apoia os pés embaixo
+    const boy = scene.add.image(0, 30 * scale, 'boy-walk-01').setOrigin(0.5, 1);
+    boy.setScale((60 * scale) / BOY_DRAWING_HEIGHT);
     parts.push(boy);
   } else if (type === 'skeleton') {
     const skeleton = scene.add.image(0, 0, 'skeleton-walk-1');

@@ -1,0 +1,1249 @@
+{
+  "instruments": [
+    {
+      "id": "cordas",
+      "name": "Cordas",
+      "category": "Cordas",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Strings/Violin Section/susVib",
+        "files": [
+          "VlnEns_susVib_A2_v1.wav",
+          "VlnEns_susVib_C4_v1.wav",
+          "VlnEns_susVib_D5_v1.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "cordas-57.wav",
+          "root": 56.989,
+          "loopStart": 1.4,
+          "loopEnd": 1.95034
+        },
+        {
+          "file": "cordas-72.wav",
+          "root": 71.996,
+          "loopStart": 1.16,
+          "loopEnd": 1.71052
+        },
+        {
+          "file": "cordas-86.wav",
+          "root": 86.005,
+          "loopStart": 0.94,
+          "loopEnd": 1.4898
+        }
+      ],
+      "defaults": {
+        "attack": 0.12,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.45,
+        "volume": 0.7,
+        "reverb": 0.45,
+        "chorus": 0.3
+      },
+      "kb": 222
+    },
+    {
+      "id": "violoncelos",
+      "name": "Violoncelos",
+      "category": "Cordas",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Strings/Cello Section/susvib",
+        "files": [
+          "susvib_C1_v1_1.wav",
+          "susvib_D2_v1_1.wav",
+          "susvib_C3_v1_1.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "violoncelos-36.wav",
+          "root": 36.001,
+          "loopStart": 1.38,
+          "loopEnd": 1.93039
+        },
+        {
+          "file": "violoncelos-50.wav",
+          "root": 50.038,
+          "loopStart": 0.68,
+          "loopEnd": 1.23043
+        },
+        {
+          "file": "violoncelos-60.wav",
+          "root": 60.008,
+          "loopStart": 0.62,
+          "loopEnd": 1.17016
+        }
+      ],
+      "defaults": {
+        "attack": 0.1,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.4,
+        "volume": 0.75,
+        "reverb": 0.4
+      },
+      "kb": 187
+    },
+    {
+      "id": "pizzicato",
+      "name": "Pizzicato",
+      "category": "Cordas",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Strings/Violin Section/Pizz",
+        "files": [
+          "VlnEns_Pizz_A2_v2_rr1.wav",
+          "VlnEns_Pizz_A3_v2_rr1.wav",
+          "VlnEns_Pizz_B4_v1_rr1.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "pizzicato-57.wav",
+          "root": 56.998
+        },
+        {
+          "file": "pizzicato-69.wav",
+          "root": 68.959
+        },
+        {
+          "file": "pizzicato-83.wav",
+          "root": 83
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.8,
+        "sustain": 1,
+        "release": 0.15,
+        "volume": 0.8,
+        "reverb": 0.35
+      },
+      "kb": 77
+    },
+    {
+      "id": "contrabaixo",
+      "name": "Contrabaixo (pizz.)",
+      "category": "Cordas",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Strings/Solo Contrabass/Pizz",
+        "files": [
+          "BKCtbss_Pizz_A#0_v3_rr1.wav",
+          "BKCtbss_Pizz_A1_v1_rr1.wav",
+          "BKCtbss_Pizz_C#2_v1_rr1.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "contrabaixo-34.wav",
+          "root": 34.03
+        },
+        {
+          "file": "contrabaixo-45.wav",
+          "root": 45.147
+        },
+        {
+          "file": "contrabaixo-49.wav",
+          "root": 49.044
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.8,
+        "sustain": 1,
+        "release": 0.15,
+        "volume": 1,
+        "reverb": 0.15
+      },
+      "kb": 207
+    },
+    {
+      "id": "harpa",
+      "name": "Harpa",
+      "category": "Cordas",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Strings/Harp",
+        "files": [
+          "KSHarp_B1_mf.wav",
+          "KSHarp_C3_mf.wav",
+          "KSHarp_A4_mf.wav",
+          "KSHarp_D6_mf.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "harpa-35.wav",
+          "root": 34.854
+        },
+        {
+          "file": "harpa-48.wav",
+          "root": 47.973
+        },
+        {
+          "file": "harpa-69.wav",
+          "root": 68.888
+        },
+        {
+          "file": "harpa-86.wav",
+          "root": 85.928
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.8,
+        "sustain": 1,
+        "release": 0.15,
+        "volume": 0.8,
+        "reverb": 0.5,
+        "echo": 0.2
+      },
+      "kb": 374
+    },
+    {
+      "id": "flauta",
+      "name": "Flauta",
+      "category": "Sopros",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Woodwinds/Flute/susvib",
+        "files": [
+          "LDFlute_susvib_C3_v1_1.wav",
+          "LDFlute_susvib_C4_v1_1.wav",
+          "LDFlute_susvib_C5_v1_1.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "flauta-60.wav",
+          "root": 59.978,
+          "loopStart": 0.68,
+          "loopEnd": 1.23111
+        },
+        {
+          "file": "flauta-72.wav",
+          "root": 72.01,
+          "loopStart": 0.76,
+          "loopEnd": 1.31007
+        },
+        {
+          "file": "flauta-84.wav",
+          "root": 83.973,
+          "loopStart": 0.54,
+          "loopEnd": 1.09029
+        }
+      ],
+      "defaults": {
+        "attack": 0.04,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.75,
+        "reverb": 0.4,
+        "echo": 0.25
+      },
+      "kb": 157
+    },
+    {
+      "id": "clarinete",
+      "name": "Clarinete",
+      "category": "Sopros",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Woodwinds/Clarinet/susLong",
+        "files": [
+          "DCClar_susLong_D2_v2_rr1_sum.wav",
+          "DCClar_susLong_D3_v2_rr1_sum.wav",
+          "DCClar_susLong_A#3_v2_rr1_sum.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "clarinete-50.wav",
+          "root": 50.04,
+          "loopStart": 0.88,
+          "loopEnd": 1.43039
+        },
+        {
+          "file": "clarinete-62.wav",
+          "root": 62.021,
+          "loopStart": 0.68,
+          "loopEnd": 1.23098
+        },
+        {
+          "file": "clarinete-70.wav",
+          "root": 70.024,
+          "loopStart": 0.3,
+          "loopEnd": 0.85052
+        }
+      ],
+      "defaults": {
+        "attack": 0.03,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.75,
+        "reverb": 0.35,
+        "vibDepth": 6,
+        "vibRate": 5.5,
+        "vibDelay": 0.35
+      },
+      "kb": 151
+    },
+    {
+      "id": "oboe",
+      "name": "Oboé",
+      "category": "Sopros",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Woodwinds/Oboe/Vib",
+        "files": [
+          "Oboe_Vib_D3_v1_Main.wav",
+          "Oboe_Vib_D4_v1_Main.wav",
+          "Oboe_Vib_D5_v1_Main.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "oboe-62.wav",
+          "root": 61.98,
+          "loopStart": 0.76,
+          "loopEnd": 1.30884
+        },
+        {
+          "file": "oboe-74.wav",
+          "root": 74.016,
+          "loopStart": 0.7,
+          "loopEnd": 1.24943
+        },
+        {
+          "file": "oboe-86.wav",
+          "root": 86.002,
+          "loopStart": 0.44,
+          "loopEnd": 0.98989
+        }
+      ],
+      "defaults": {
+        "attack": 0.03,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.7,
+        "reverb": 0.35
+      },
+      "kb": 153
+    },
+    {
+      "id": "ocarina",
+      "name": "Ocarina",
+      "category": "Sopros",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Aerophones/Edge-blown Aerophones/Ocarina, Typical/Sustains/SusVib",
+        "files": [
+          "StdOcarina_SusVib_A3.wav",
+          "StdOcarina_SusVib_C5.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "ocarina-69.wav",
+          "root": 68.929,
+          "loopStart": 0.3,
+          "loopEnd": 0.84998
+        },
+        {
+          "file": "ocarina-84.wav",
+          "root": 84.137,
+          "loopStart": 0.3,
+          "loopEnd": 0.84984
+        }
+      ],
+      "defaults": {
+        "attack": 0.03,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.75,
+        "reverb": 0.45,
+        "echo": 0.3
+      },
+      "kb": 73
+    },
+    {
+      "id": "trompa",
+      "name": "Trompa",
+      "category": "Metais",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Brass/F Horn/sus",
+        "files": [
+          "MOHorn_sus_A#1_v2_1.wav",
+          "MOHorn_sus_C3_v2_1.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "trompa-46.wav",
+          "root": 45.961,
+          "loopStart": 0.3,
+          "loopEnd": 0.85039
+        },
+        {
+          "file": "trompa-60.wav",
+          "root": 59.964,
+          "loopStart": 0.3,
+          "loopEnd": 0.85152
+        }
+      ],
+      "defaults": {
+        "attack": 0.06,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.75,
+        "reverb": 0.45,
+        "vibDepth": 5,
+        "vibRate": 5.5,
+        "vibDelay": 0.35
+      },
+      "kb": 73
+    },
+    {
+      "id": "trompete",
+      "name": "Trompete",
+      "category": "Metais",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Brass/Trumpet/sus",
+        "files": [
+          "Sum_SHTrumpet_sus_A2_v1_rr1.wav",
+          "Sum_SHTrumpet_sus_A#3_v1_rr1.wav",
+          "Sum_SHTrumpet_sus_A4_v1_rr1.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "trompete-57.wav",
+          "root": 56.995,
+          "loopStart": 0.3,
+          "loopEnd": 0.85016
+        },
+        {
+          "file": "trompete-70.wav",
+          "root": 70.003,
+          "loopStart": 0.3,
+          "loopEnd": 0.84907
+        },
+        {
+          "file": "trompete-81.wav",
+          "root": 80.985,
+          "loopStart": 0.3,
+          "loopEnd": 0.85048
+        }
+      ],
+      "defaults": {
+        "attack": 0.02,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.7,
+        "reverb": 0.35,
+        "vibDepth": 8,
+        "vibRate": 5.5,
+        "vibDelay": 0.35
+      },
+      "kb": 110
+    },
+    {
+      "id": "trombone",
+      "name": "Trombone",
+      "category": "Metais",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Brass/Tenor Trombone/sus",
+        "files": [
+          "tenortbn_sus_A#1_v2_1.wav",
+          "tenortbn_sus_C3_v2_1.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "trombone-46.wav",
+          "root": 45.996,
+          "loopStart": 0.3,
+          "loopEnd": 0.8493
+        },
+        {
+          "file": "trombone-60.wav",
+          "root": 59.999,
+          "loopStart": 0.42,
+          "loopEnd": 0.97043
+        }
+      ],
+      "defaults": {
+        "attack": 0.04,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.75,
+        "reverb": 0.35
+      },
+      "kb": 78
+    },
+    {
+      "id": "tuba",
+      "name": "Tuba",
+      "category": "Metais",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Brass/Tuba/sus",
+        "files": [
+          "Tuba3_sus_A#0_v2_rr1_Mid.wav",
+          "Tuba3_sus_D2_v2_rr1_Mid.wav"
+        ]
+      },
+      "loop": true,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "tuba-34.wav",
+          "root": 33.993,
+          "loopStart": 0.3,
+          "loopEnd": 0.84939
+        },
+        {
+          "file": "tuba-50.wav",
+          "root": 49.943,
+          "loopStart": 0.3,
+          "loopEnd": 0.84662
+        }
+      ],
+      "defaults": {
+        "attack": 0.04,
+        "decay": 0.3,
+        "sustain": 0.85,
+        "release": 0.25,
+        "volume": 0.9,
+        "reverb": 0.2
+      },
+      "kb": 73
+    },
+    {
+      "id": "marimba",
+      "name": "Marimba",
+      "category": "Teclas e percussão",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Marimba",
+        "files": [
+          "Marimba_hit_Outrigger_C2_med_01.wav",
+          "Marimba_hit_Outrigger_C4_med_01.wav",
+          "Marimba_hit_Outrigger_C6_med_01.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "marimba-48.wav",
+          "root": 48.03
+        },
+        {
+          "file": "marimba-72.wav",
+          "root": 72.046
+        },
+        {
+          "file": "marimba-96.wav",
+          "root": 96
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.85,
+        "reverb": 0.35,
+        "echo": 0.2
+      },
+      "kb": 189
+    },
+    {
+      "id": "xilofone",
+      "name": "Xilofone",
+      "category": "Teclas e percussão",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets",
+        "files": [
+          "Xylo_Medium_G3_ff_01_far.wav",
+          "Xylo_Medium_G5_ff_01_far.wav",
+          "Xylo_Medium_C7_ff_01_far.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "xilofone-67.wav",
+          "root": 67.103
+        },
+        {
+          "file": "xilofone-91.wav",
+          "root": 91.147
+        },
+        {
+          "file": "xilofone-108.wav",
+          "root": 108.19
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.75,
+        "reverb": 0.3
+      },
+      "kb": 82
+    },
+    {
+      "id": "vibrafone",
+      "name": "Vibrafone",
+      "category": "Teclas e percussão",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets",
+        "files": [
+          "Vibes_soft_F2_v1_rr1_Main.wav",
+          "Vibes_soft_B3_v1_rr1_Main.wav",
+          "Vibes_soft_E5_v1_rr1_Main.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "vibrafone-53.wav",
+          "root": 52.983
+        },
+        {
+          "file": "vibrafone-71.wav",
+          "root": 70.999
+        },
+        {
+          "file": "vibrafone-88.wav",
+          "root": 88.003
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.8,
+        "reverb": 0.5,
+        "chorus": 0.2
+      },
+      "kb": 310
+    },
+    {
+      "id": "glockenspiel",
+      "name": "Glockenspiel",
+      "category": "Teclas e percussão",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Glockenspiel",
+        "files": [
+          "glock_medium_G4_01.wav",
+          "glock_medium_C6_01.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "glockenspiel-79.wav",
+          "root": 78.999
+        },
+        {
+          "file": "glockenspiel-96.wav",
+          "root": 96.159
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.6,
+        "reverb": 0.5,
+        "echo": 0.3
+      },
+      "kb": 225
+    },
+    {
+      "id": "kalimba",
+      "name": "Kalimba",
+      "category": "Teclas e percussão",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Plucked Idiophones/Kalimba, Tanzania",
+        "files": [
+          "MBira3_pluck_Main_C#2_k10_50_100_rr2.wav",
+          "MBira3_pluck_Main_D#3_k7_50_100_rr2.wav",
+          "MBira3_pluck_Main_D#4_k20_50_100_rr2.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "kalimba-49.wav",
+          "root": 49.126
+        },
+        {
+          "file": "kalimba-64.wav",
+          "root": 63.585
+        },
+        {
+          "file": "kalimba-75.wav",
+          "root": 75.218
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.85,
+        "reverb": 0.4,
+        "echo": 0.25
+      },
+      "kb": 162
+    },
+    {
+      "id": "balafon",
+      "name": "Balafon",
+      "category": "Teclas e percussão",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Balafon/Traditional Mallet",
+        "files": [
+          "EthnicXylo_tradM_C#3_vl1_rr1_Mid.wav",
+          "EthnicXylo_tradM_F5_vl1_rr1_Mid.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "balafon-61.wav",
+          "root": 61.111
+        },
+        {
+          "file": "balafon-89.wav",
+          "root": 88.897
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.85,
+        "reverb": 0.3
+      },
+      "kb": 59
+    },
+    {
+      "id": "piano-fm",
+      "name": "Piano elétrico (FM)",
+      "category": "Teclas e percussão",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Electrophones/TX81Z/FM Piano",
+        "files": [
+          "FMPiano_C2_vl2.wav",
+          "FMPiano_C3_vl2.wav",
+          "FMPiano_C4_vl2.wav",
+          "FMPiano_C5_vl2.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "piano-fm-36.wav",
+          "root": 36.018
+        },
+        {
+          "file": "piano-fm-48.wav",
+          "root": 48.01
+        },
+        {
+          "file": "piano-fm-60.wav",
+          "root": 60.005
+        },
+        {
+          "file": "piano-fm-72.wav",
+          "root": 72.002
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.8,
+        "sustain": 1,
+        "release": 0.15,
+        "volume": 0.75,
+        "reverb": 0.4,
+        "chorus": 0.35
+      },
+      "kb": 379
+    },
+    {
+      "id": "timpano",
+      "name": "Tímpano",
+      "category": "Teclas e percussão",
+      "source": "VSCO 2 Community Edition",
+      "origin": {
+        "repo": "sgossner/VSCO-2-CE",
+        "dir": "Percussion/Timpani",
+        "files": [
+          "Timpani1_Hit_v3_rr1_Sum.wav",
+          "Timpani3_Hit_v3_rr1_Sum.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": true,
+      "zones": [
+        {
+          "file": "timpano-30.wav",
+          "root": 29.766
+        },
+        {
+          "file": "timpano-37.wav",
+          "root": 37.273
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.9,
+        "reverb": 0.45
+      },
+      "kb": 172
+    },
+    {
+      "id": "bumbo",
+      "name": "Bumbo",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Membranophones/Struck Membranophones/Bass Drum 1",
+        "files": [
+          "BDrumNew_hit_v5_rr1_Sum.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "bumbo-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 1,
+        "reverb": 0.15
+      },
+      "kb": 39
+    },
+    {
+      "id": "cajon",
+      "name": "Cajón",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Cajon",
+        "files": [
+          "Cajon_hit1_f_rr1.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "cajon-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 1,
+        "reverb": 0.15
+      },
+      "kb": 15
+    },
+    {
+      "id": "caixa-bateria",
+      "name": "Caixa",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Membranophones/Struck Membranophones/Snare Drum, Modern 1",
+        "files": [
+          "Snare2_HitSN_v5_rr1_Mid.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "caixa-bateria-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.8,
+        "reverb": 0.3
+      },
+      "kb": 38
+    },
+    {
+      "id": "chimbal-fechado",
+      "name": "Chimbal fechado",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Hi-Hat Cymbal",
+        "files": [
+          "HiHat_HitC_v3_rr1_Mid.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "chimbal-fechado-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.55,
+        "reverb": 0.15
+      },
+      "kb": 22
+    },
+    {
+      "id": "chimbal-aberto",
+      "name": "Chimbal aberto",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Hi-Hat Cymbal",
+        "files": [
+          "HiHat_HitO_rr1_Mid.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "chimbal-aberto-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.5,
+        "reverb": 0.2
+      },
+      "kb": 63
+    },
+    {
+      "id": "prato",
+      "name": "Prato",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Suspended Cymbal 1",
+        "files": [
+          "susCymb1_hit_f1.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "prato-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.55,
+        "reverb": 0.35
+      },
+      "kb": 156
+    },
+    {
+      "id": "conga",
+      "name": "Conga",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Membranophones/Struck Membranophones/Conga",
+        "files": [
+          "Conga_HitN_v2_rr1_Sum.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "conga-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.9,
+        "reverb": 0.3
+      },
+      "kb": 27
+    },
+    {
+      "id": "bongo",
+      "name": "Bongô",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Membranophones/Struck Membranophones/Bongos",
+        "files": [
+          "BongoH_Hit1_v2_rr1_Mid.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "bongo-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.85,
+        "reverb": 0.3
+      },
+      "kb": 22
+    },
+    {
+      "id": "chocalho",
+      "name": "Chocalho",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Shaker, Small",
+        "files": [
+          "Mid_ShakerDouble_Down_rr1.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "chocalho-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.6,
+        "reverb": 0.2
+      },
+      "kb": 17
+    },
+    {
+      "id": "pandeirola",
+      "name": "Pandeirola",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Tambourine 1",
+        "files": [
+          "Tamb1_Hit_v2_rr1_Mid.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "pandeirola-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.6,
+        "reverb": 0.25
+      },
+      "kb": 33
+    },
+    {
+      "id": "palmas",
+      "name": "Palmas",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Claps",
+        "files": [
+          "Clap_rr1.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "palmas-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.7,
+        "reverb": 0.35
+      },
+      "kb": 18
+    },
+    {
+      "id": "bloco",
+      "name": "Bloco de madeira",
+      "category": "Bateria",
+      "source": "VCSL",
+      "origin": {
+        "repo": "sgossner/VCSL",
+        "dir": "Idiophones/Struck Idiophones/Woodblock",
+        "files": [
+          "wood_click_f_rr1.wav"
+        ]
+      },
+      "loop": false,
+      "pitched": false,
+      "zones": [
+        {
+          "file": "bloco-60.wav",
+          "root": 60
+        }
+      ],
+      "defaults": {
+        "attack": 0.001,
+        "decay": 0.5,
+        "sustain": 1,
+        "release": 0.08,
+        "volume": 0.7,
+        "reverb": 0.3
+      },
+      "kb": 14
+    }
+  ]
+}

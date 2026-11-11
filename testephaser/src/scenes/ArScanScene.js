@@ -8,6 +8,7 @@ import { playSfx } from '../audio/sfx.js';
 import { onPadMenu } from '../input/gamepad.js';
 import { speak } from '../ui/speech.js';
 import { isUnlocked, markFound } from '../config/progress.js';
+import { paintPaper, titleStyle, textStyle } from '../ui/theme.js';
 
 // Modo livro: a câmera de realidade aumentada (ArScannerOverlay, por cima do
 // canvas). Achou a página → personagens animados → "Jogar" → a fase abre aqui
@@ -19,12 +20,9 @@ export default class ArScanScene extends Phaser.Scene {
   }
 
   create() {
+    paintPaper(this);
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Abrindo a câmera…', {
-        fontFamily: 'monospace',
-        fontSize: '48px',
-        color: '#ffffff',
-      })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Abrindo a câmera…', textStyle(52))
       .setOrigin(0.5);
 
     this.overlay = null;
@@ -94,20 +92,13 @@ export default class ArScanScene extends Phaser.Scene {
   showMessage(title, text, spoken) {
     this.children.removeAll(true);
     this.add
-      .text(GAME_WIDTH / 2, 360, title, {
-        fontFamily: 'monospace',
-        fontSize: '96px',
-        fontStyle: 'bold',
-        color: '#ffe066',
-      })
+      .text(GAME_WIDTH / 2, 360, title.toUpperCase(), titleStyle(104))
       .setOrigin(0.5);
     this.add
       .text(GAME_WIDTH / 2, 490, text, {
-        fontFamily: 'monospace',
-        fontSize: '44px',
-        color: '#ffffff',
+        ...textStyle(46),
         align: 'center',
-        lineSpacing: 10,
+        lineSpacing: 4,
       })
       .setOrigin(0.5);
     speak(spoken);

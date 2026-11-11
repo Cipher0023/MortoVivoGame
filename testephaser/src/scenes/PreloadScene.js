@@ -7,6 +7,7 @@ import {
   TILE_MANIFEST,
   OBJECT_MANIFEST,
   BOY_WALK_MANIFEST,
+  BOY_JUMP_MANIFEST,
   BLOCK_MANIFEST,
   SOUNDS_PATH,
   SOUND_MANIFEST,
@@ -50,7 +51,7 @@ export default class PreloadScene extends Phaser.Scene {
     for (const obj of OBJECT_MANIFEST) {
       this.load.image(obj.key, OBJECTS_PATH + obj.file);
     }
-    for (const frame of BOY_WALK_MANIFEST) {
+    for (const frame of [...BOY_WALK_MANIFEST, ...BOY_JUMP_MANIFEST]) {
       this.load.image(frame.key, BOY_PATH + frame.file);
     }
     for (const frame of SKELETON_WALK_MANIFEST) {
@@ -74,6 +75,10 @@ export default class PreloadScene extends Phaser.Scene {
     const params = new URLSearchParams(window.location.search);
     if (params.get('scene') === 'editor') {
       this.scene.start('LevelEditor');
+      return;
+    }
+    if (params.get('scene') === 'musica') {
+      this.scene.start('MusicEditor');
       return;
     }
 

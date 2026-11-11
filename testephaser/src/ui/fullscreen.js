@@ -1,6 +1,7 @@
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/constants.js';
 import { createSmallButton } from './Button.js';
 import { playSfx } from '../audio/sfx.js';
+import { CSS, textStyle } from './theme.js';
 
 function isInstalledApp() {
   return (
@@ -59,12 +60,10 @@ function toggleInstallHint(scene) {
       GAME_HEIGHT / 2,
       'Tela cheia no iPhone:\n\n1. Toque em Compartilhar (quadrado com seta)\n2. Escolha "Adicionar à Tela de Início"\n3. Abra o jogo pelo ícone criado\n\n(toque para fechar)',
       {
-        fontFamily: 'monospace',
-        fontSize: '40px',
-        color: '#ffffff',
+        ...textStyle(42),
         align: 'center',
-        backgroundColor: '#000000dd',
-        padding: { x: 48, y: 36 },
+        backgroundColor: CSS.papel,
+        padding: { x: 56, y: 40 },
       }
     )
     .setOrigin(0.5)
