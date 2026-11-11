@@ -1,0 +1,243 @@
+/* Câmera de AR (ArScannerOverlay) e código de desenhos (SymbolCodeOverlay).
+   Abaixo do aviso de girar a tela (#rotate-hint, z-index 10) e acima do jogo.
+   Pensado para crianças pequenas e com necessidades especiais: botões
+   grandes (48px ou mais), alto contraste, texto curto e foco visível. */
+.ar-overlay,
+.sym-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ar-overlay {
+  background: #000000;
+}
+.sym-overlay {
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2vmin;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 8px)
+    calc(env(safe-area-inset-right, 0px) + 12px)
+    calc(env(safe-area-inset-bottom, 0px) + 8px)
+    calc(env(safe-area-inset-left, 0px) + 12px);
+  background: #1a1a2e;
+  box-sizing: border-box;
+}
+
+.ar-view {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ar-overlay button,
+.sym-overlay button {
+  appearance: none;
+  min-width: 48px;
+  min-height: 48px;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  background: #333355;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.ar-overlay button:focus-visible,
+.sym-overlay button:focus-visible {
+  outline: 4px solid #ffe066;
+  outline-offset: 3px;
+}
+.ar-overlay button:active,
+.sym-overlay button:active {
+  transform: scale(0.96);
+}
+
+.ar-top {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: calc(env(safe-area-inset-left, 0px) + 8px);
+  right: calc(env(safe-area-inset-right, 0px) + 8px);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.sym-overlay .ar-top {
+  position: static;
+  width: 100%;
+}
+.ar-round {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  font-size: 24px !important;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.55) !important;
+}
+.ar-status {
+  flex: 1;
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.65);
+  font-size: clamp(17px, 4.2vmin, 26px);
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+}
+.ar-overlay.is-error .ar-status {
+  background: rgba(170, 40, 40, 0.92);
+}
+
+.ar-bottom {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+.ar-play {
+  padding: 16px 40px;
+  border-color: #ffffff !important;
+  background: #33aa66 !important;
+  font-size: clamp(22px, 6vmin, 36px) !important;
+  box-shadow: 0 6px 0 #1d6b3f;
+  animation: ar-pulse 1.4s ease-in-out infinite;
+}
+.ar-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  background: rgba(0, 0, 0, 0.6) !important;
+  font-size: clamp(15px, 3.6vmin, 20px);
+}
+.ar-help-icons {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+/* sem câmera ou depois de muito tempo procurando: a alternativa vira o
+   botão principal */
+.ar-overlay.needs-help .ar-help {
+  padding: 14px 26px;
+  background: #33aa66 !important;
+  font-size: clamp(18px, 5vmin, 28px);
+  animation: ar-pulse 1.4s ease-in-out infinite;
+}
+.ar-overlay.is-error .ar-view {
+  display: none;
+}
+@keyframes ar-pulse {
+  50% { transform: scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ar-play,
+  .ar-overlay.needs-help .ar-help {
+    animation: none;
+  }
+}
+
+/* ---- código de desenhos ---- */
+.sym-slots {
+  display: flex;
+  gap: 2vmin;
+}
+.sym-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15vmin;
+  height: 15vmin;
+  min-width: 52px;
+  min-height: 52px;
+  border: 4px dashed rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.sym-slot.is-filled {
+  border-style: solid;
+  border-color: #ffffff;
+  background: #ffffff;
+}
+.sym-slot svg {
+  width: 80%;
+  height: 80%;
+}
+.sym-overlay.is-wrong .sym-slots {
+  animation: sym-shake 0.4s ease-in-out 2;
+}
+.sym-overlay.is-wrong .sym-slot.is-filled {
+  border-color: #e0263e;
+}
+.sym-overlay.is-right .sym-slot.is-filled {
+  border-color: #33ff88;
+  box-shadow: 0 0 0 4px #33ff88;
+}
+@keyframes sym-shake {
+  25% { transform: translateX(-12px); }
+  75% { transform: translateX(12px); }
+}
+
+.sym-grid {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 2vmin;
+}
+/* deitado (o normal): uma fileira só, pra caber na altura */
+@media (orientation: landscape) {
+  .sym-grid {
+    grid-template-columns: repeat(8, auto);
+  }
+}
+.sym-overlay .sym-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: min(20vmin, 10.5vw);
+  height: auto;
+  aspect-ratio: 0.85;
+  min-width: 60px;
+  padding: 6px;
+  border-radius: 18px;
+  border-color: #cfcfe6;
+  background: #ffffff;
+  color: #1a1a2e;
+  font-size: clamp(12px, 2.6vmin, 16px);
+}
+@media (orientation: portrait) {
+  .sym-overlay .sym-key {
+    width: 20vmin;
+  }
+}
+.sym-key svg {
+  width: 100%;
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+.sym-actions {
+  display: flex;
+  gap: 12px;
+}
+.sym-actions button {
+  padding: 8px 24px;
+  font-size: clamp(16px, 3.6vmin, 22px);
+}

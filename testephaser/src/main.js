@@ -7,8 +7,31 @@ import HudScene from './scenes/HudScene.js';
 import MainMenuScene from './scenes/MainMenuScene.js';
 import TutorialScene from './scenes/TutorialScene.js';
 import ScanScene from './scenes/ScanScene.js';
+import BookStartScene from './scenes/BookStartScene.js';
+import ArScanScene from './scenes/ArScanScene.js';
 import { GAME_WIDTH, GAME_HEIGHT, PHYSICS } from './config/constants.js';
 import { initOrientation } from './ui/orientation.js';
+import { initMode } from './config/mode.js';
+
+// modo livro (padrão) ou modo jogo (?modo=jogo): ver config/mode.js
+initMode();
+
+// Versão nova publicada com a página aberta: o deploy apaga os arquivos da
+// versão anterior, e a câmera de AR (baixada só na hora) pedia um arquivo que
+// não existe mais. Recarrega a página para pegar a versão nova. No máximo uma
+// vez por minuto, para nunca entrar em ciclo se o arquivo faltar de verdade.
+window.addEventListener('vite:preloadError', (event) => {
+  const KEY = 'mortovivo-recarregou';
+  try {
+    const last = Number(window.sessionStorage.getItem(KEY));
+    if (Date.now() - last < 60000) return; // deixa o erro seguir para o aviso
+    window.sessionStorage.setItem(KEY, String(Date.now()));
+  } catch {
+    return;
+  }
+  event.preventDefault();
+  window.location.reload();
+});
 
 const config = {
   type: Phaser.AUTO,
@@ -43,6 +66,8 @@ const config = {
   // Overlays (Hud, TouchControls) depois da fase na lista = desenhados por cima.
   scene: [
     PreloadScene,
+    BookStartScene,
+    ArScanScene,
     MainMenuScene,
     TutorialScene,
     ScanScene,

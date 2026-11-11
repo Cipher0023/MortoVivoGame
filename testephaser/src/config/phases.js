@@ -13,14 +13,25 @@
 // src/levels/data/, montado no editor — sem o arquivo, o jogo avisa "em
 // construção") ou abre uma cena própria (`sceneKey`, ex.: o editor).
 
+//
+// `symbols`: o código de desenhos impresso num canto da página (ver
+// symbols.js). É a entrada de quem não consegue usar a câmera. Mesma regra do
+// `code`: não mude depois que o livro for impresso. Gere as imagens para o
+// ilustrador com `npm run simbolos`.
+
 export const PHASES = [
-  { number: 1, title: 'Fase 1', level: 'fase1', code: 'MORTOVIVO-FASE1-R7K2' },
-  { number: 2, title: 'Fase 2', level: 'fase2', code: 'MORTOVIVO-FASE2-M4X9' },
-  { number: 3, title: 'Fase 3', level: 'fase3', code: 'MORTOVIVO-FASE3-T8B5' },
-  { number: 4, title: 'Fase 4', level: 'fase4', code: 'MORTOVIVO-FASE4-Q3W6' },
-  // Fase 5: o editor de fases (uso no computador)
+  { number: 1, title: 'Fase 1', level: 'fase1', code: 'MORTOVIVO-FASE1-R7K2', symbols: ['sol', 'coracao', 'folha'] },
+  { number: 2, title: 'Fase 2', level: 'fase2', code: 'MORTOVIVO-FASE2-M4X9', symbols: ['lua', 'estrela', 'gota'] },
+  { number: 3, title: 'Fase 3', level: 'fase3', code: 'MORTOVIVO-FASE3-T8B5', symbols: ['casa', 'flor', 'sol'] },
+  { number: 4, title: 'Fase 4', level: 'fase4', code: 'MORTOVIVO-FASE4-Q3W6', symbols: ['coracao', 'lua', 'casa'] },
+  // Fase 5: o editor de fases (uso no computador; só no modo jogo)
   { number: 5, title: 'Editor de fases', sceneKey: 'LevelEditor', code: 'MORTOVIVO-FASE5-E2D8' },
 ];
+
+// A fase cujo código de desenhos é exatamente `ids` (na ordem), ou null.
+export function findPhaseBySymbols(ids) {
+  return PHASES.find((phase) => phase.symbols?.join() === ids.join()) ?? null;
+}
 
 // Aceita o código puro (QR do livro ou digitado à mão) ou uma URL com
 // ?fase=<código> — assim, se um dia os QR codes virarem links pro site, o

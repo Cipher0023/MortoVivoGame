@@ -24,7 +24,7 @@ export default class MainMenuScene extends Phaser.Scene {
   create() {
     setLandscapeRequired(false);
     this.events.once('shutdown', () => setLandscapeRequired(true));
-    this.createScenery();
+    createMenuScenery(this);
 
     this.add
       .text(GAME_WIDTH / 2, 230, 'Morto Vivo game', {
@@ -61,21 +61,22 @@ export default class MainMenuScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-ENTER', play);
     onPadMenu(this, { onConfirm: play });
   }
+}
 
-  createScenery() {
-    // chão com os mesmos tiles da fase
-    this.add.tileSprite(GAME_WIDTH / 2, GROUND_TOP + 12, GAME_WIDTH, 24, 'ground-1');
-    this.add.tileSprite(GAME_WIDTH / 2, GROUND_TOP + 24 + 103, GAME_WIDTH, 206, 'dirt-1');
+// Chão e os dois personagens andando no lugar (menu e tela Começar do livro).
+export function createMenuScenery(scene) {
+  // chão com os mesmos tiles da fase
+  scene.add.tileSprite(GAME_WIDTH / 2, GROUND_TOP + 12, GAME_WIDTH, 24, 'ground-1');
+  scene.add.tileSprite(GAME_WIDTH / 2, GROUND_TOP + 24 + 103, GAME_WIDTH, 206, 'dirt-1');
 
-    // os dois personagens, lado a lado, andando no lugar
-    createBoyWalkAnimation(this);
-    const boy = this.add.sprite(GAME_WIDTH / 2 - 420, GROUND_TOP, 'boy-walk-01').setOrigin(0.5, 1);
-    boy.setScale(260 / boy.height);
-    if (this.anims.exists('boy-walk')) boy.play('boy-walk');
+  // os dois personagens, lado a lado, andando no lugar
+  createBoyWalkAnimation(scene);
+  const boy = scene.add.sprite(GAME_WIDTH / 2 - 420, GROUND_TOP, 'boy-walk-01').setOrigin(0.5, 1);
+  boy.setScale(260 / boy.height);
+  if (scene.anims.exists('boy-walk')) boy.play('boy-walk');
 
-    createSkeletonWalkAnimation(this);
-    const skeleton = this.add.sprite(GAME_WIDTH / 2 + 420, GROUND_TOP, 'skeleton-walk-1').setOrigin(0.5, 1);
-    skeleton.setScale(260 / skeleton.height);
-    if (this.anims.exists('skeleton-walk')) skeleton.play('skeleton-walk');
-  }
+  createSkeletonWalkAnimation(scene);
+  const skeleton = scene.add.sprite(GAME_WIDTH / 2 + 420, GROUND_TOP, 'skeleton-walk-1').setOrigin(0.5, 1);
+  skeleton.setScale(260 / skeleton.height);
+  if (scene.anims.exists('skeleton-walk')) skeleton.play('skeleton-walk');
 }

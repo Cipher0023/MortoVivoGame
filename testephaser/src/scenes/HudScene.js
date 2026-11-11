@@ -6,6 +6,8 @@ import { addFullscreenButton } from '../ui/fullscreen.js';
 import { addSoundButton } from '../ui/soundButton.js';
 import { onPadMenu } from '../input/gamepad.js';
 import { playSfx } from '../audio/sfx.js';
+import { isGameMode, scanSceneKey } from '../config/mode.js';
+import { speak } from '../ui/speech.js';
 
 const KEYBOARD_HINT =
   'Setas/WASD: mover | Espaço: pular | Q: trocar | F: parceiro esperar/seguir | E: interagir/empurrar/puxar | C: cabeça | R (segurar/soltar): braço/chute | W/S: escada | M: som | Esc: sair';
@@ -37,7 +39,7 @@ export default class HudScene extends Phaser.Scene {
     const play = this.scene.get('Play');
     // fase aberta pelo "Testar" do editor: sair volta pro editor
     this.isEditorTest = Boolean(play.returnTo);
-    const exitLabel = this.isEditorTest ? 'Voltar ao editor' : 'Menu';
+    const exitLabel = this.isEditorTest ? 'Voltar ao editor' : isGameMode() ? 'Menu' : 'Livro';
     const exitButton = createSmallButton(this, GAME_WIDTH - 16, 16, exitLabel, fontSize, () => play.exitLevel());
     let rightX = GAME_WIDTH - 16 - exitButton.width - 12;
     const fullscreenButton = addFullscreenButton(this, rightX, 16, fontSize);
@@ -80,10 +82,20 @@ export default class HudScene extends Phaser.Scene {
     const play = this.scene.get('Play');
     // direto pra câmera (o tutorial já foi visto): escanear a próxima fase do
     // livro; no teste do editor, volta pro editor
-    const [label, next] = this.isEditorTest
-      ? ['VOLTAR AO EDITOR', () => play.exitLevel()]
-      : ['PRÓXIMA FASE', () => play.leaveTo('Scan')];
-    createButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, label, next, { width: this.isEditorTest ? 620 : 460 });
+    const [label, next, width] = this.isEditorTest
+      ? ['VOLTAR AO EDITOR', () => play.exitLevel(), 620]
+      : isGameMode()
+        ? ['PRÓXIMA FASE', () => play.leaveTo('Scan'), 460]
+        : ['ESCANEAR OUTRA PÁGINA', () => play.leaveTo(scanSceneKey()), 820];
+    createButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, label, next, { width });
+    if (!this.isEditorTest && !isGameMode()) {
+      const number = play.phase?.number;
+      speak(
+        number
+          ? `Fase concluída! Muito bem! Agora procure a Fase ${number + 1} no livro.`
+          : 'Fase concluída! Muito bem! Escaneie outra página do livro.'
+      );
+    }
     // controle: A confirma o botão
     onPadMenu(this, {
       onConfirm: () => {

@@ -1,14 +1,29 @@
 # Códigos das fases — Morto Vivo game
 
+> **Modo livro (padrão do site):** a criança entra pela câmera de realidade
+> aumentada, que reconhece a própria página, ou pelo **código de desenhos**
+> impresso num canto da página (tabela abaixo). Os QR codes por
+> fase e o código digitado continuam valendo no **modo jogo** (`?modo=jogo`).
+> Ver [livro-com-realidade-aumentada.md](livro-com-realidade-aumentada.md).
+>
+> | Fase | Desenhos (nesta ordem) | Arquivo para impressão |
+> |------|------------------------|------------------------|
+> | 1 | Sol, Coração, Folha | `testephaser/impressos/simbolos-fase-1.svg` |
+> | 2 | Lua, Estrela, Gota | `testephaser/impressos/simbolos-fase-2.svg` |
+> | 3 | Casa, Flor, Sol | `testephaser/impressos/simbolos-fase-3.svg` |
+> | 4 | Coração, Lua, Casa | `testephaser/impressos/simbolos-fase-4.svg` |
+>
+> O QR code único do livro está em `testephaser/impressos/qr-livro.svg`.
+
 Cada fase do livro é aberta por um QR code impresso na página da fase. O QR code
 carrega o **código** abaixo. O mesmo código também pode ser **digitado à mão** no
 jogo (botão "Digitar código" no leitor de QR), para quem não consegue usar a câmera.
 
 | Fase | O que abre | Código | QR code | Situação |
 |------|------------|--------|---------|----------|
-| 1 | Fase 1 | `MORTOVIVO-FASE1-R7K2` | `testephaser/qrcodes/fase-1.svg` | Jogável |
-| 2 | Fase 2 | `MORTOVIVO-FASE2-M4X9` | `testephaser/qrcodes/fase-2.svg` | Em construção |
-| 3 | Fase 3 | `MORTOVIVO-FASE3-T8B5` | `testephaser/qrcodes/fase-3.svg` | Em construção |
+| 1 | Fase 1 | `MORTOVIVO-FASE1-R7K2` | `testephaser/qrcodes/fase-1.svg` | Jogável (só com o Guri, para teste) |
+| 2 | Fase 2 | `MORTOVIVO-FASE2-M4X9` | `testephaser/qrcodes/fase-2.svg` | Jogável (provisória: cópia da Fase 1 só com a Caveirinha) |
+| 3 | Fase 3 | `MORTOVIVO-FASE3-T8B5` | `testephaser/qrcodes/fase-3.svg` | Jogável (provisória: cópia da Fase 1 com os dois) |
 | 4 | Fase 4 | `MORTOVIVO-FASE4-Q3W6` | `testephaser/qrcodes/fase-4.svg` | Em construção |
 | 5 | Editor de fases (computador) | `MORTOVIVO-FASE5-E2D8` | `testephaser/qrcodes/fase-5.svg` | Pronto |
 
@@ -58,5 +73,5 @@ Com `npm run dev` rodando:
 
 - `http://localhost:5173/?fase=1` abre a Fase 1 direto (vale `1` a `4`).
 - `http://localhost:5173/?fase=MORTOVIVO-FASE1-R7K2` abre pelo código completo
-  (funciona também no site publicado).
+  (no site publicado, só no modo jogo).
 - `http://localhost:5173/?scene=editor` abre o editor.
